@@ -26,6 +26,13 @@
         <script src="src/Animated_GIF.js"></script>
         <script>
             window.onload = function() {
+
+                function buildImageCallback(img) {
+                    return function(gif) {
+                        img.src = gif;
+                    }
+                };
+
                 var imgs = document.querySelectorAll('img');
                 var agAll = new Animated_GIF();
                 agAll.setSize(500, 350);
@@ -41,16 +48,15 @@
                     agAll.addFrame(img);
 
                     var img2 = document.createElement('img');
-                    ag.getBase64GIF(function(image) {
-                        img2.src = image;
-                    });
-
                     if(img.nextSibling) {
                         img.parentNode.insertBefore(img2, img.nextSibling);
-                        } else {
+                    } else {
                         img.parentNode.appendChild(img2);
                     }
 
+                    var imageCallback = buildImageCallback(img2);
+                    ag.getBase64GIF(imageCallback);
+                    
                 }
 
                 var imgAll = document.createElement('img');
