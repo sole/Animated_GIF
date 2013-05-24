@@ -64,13 +64,11 @@ function Animated_GIF(options) {
         onRenderCompleteCallback = completeCallback;
 
         for(var i = 0; i < numWorkers && i < frames.length; i++) {
-            console.log('setting initial work load', i);
             processFrame(i);
         }
     }
 
     function processFrame(position) {
-        console.log('processFrame', position);
         var frame;
         var worker;
 
@@ -87,7 +85,6 @@ function Animated_GIF(options) {
         worker = getWorker();
 
         worker.onmessage = function(ev) {
-            console.log('worker: done', frame.position);
             var data = ev.data;
 
             // Delete original data, and free memory
@@ -101,7 +98,7 @@ function Animated_GIF(options) {
 
             freeWorker(worker);
 
-            onFrameFinished(    );
+            onFrameFinished();
         };
 
         
@@ -114,8 +111,6 @@ function Animated_GIF(options) {
 
     function processNextFrame() {
 
-        console.log('processNextFrame');
-
         var position = -1;
 
         for(var i = 0; i < frames.length; i++) {
@@ -126,8 +121,6 @@ function Animated_GIF(options) {
             }
         }
         
-        console.log('the next frame to process', position);
-
         if(position >= 0) {
             processFrame(position);
         }
@@ -135,42 +128,32 @@ function Animated_GIF(options) {
 
     function onFrameFinished() { // ~~~ taskFinished
 
-        console.log('--- frame finished ---');
-
         // The GIF is not written until we're done with all the frames
         // because they might not be processed in the same order
         var allDone = frames.every(function(frame) {
-            console.log('frame check', frame.position, 'Processing=', frame.beingProcessed, 'Done=', frame.done);
             return !frame.beingProcessed && frame.done;
         });
 
-        console.log('allDone?', allDone);
-        
         if(allDone) {
-            finishGIF();
+            if(generatingGIF === false) {
+                generateGIF(frames, onRenderCompleteCallback);
+            }
         } else {
             setTimeout(processNextFrame, 1);
         }
         
     }
 
-    function finishGIF() {
-        if(generatingGIF === false) {
-            generateGIF(frames, onRenderCompleteCallback);
-        } else {
-            console.log('gif already being generated');
-        }
-    }
-
+    // Takes the already processed data in frames and feeds it to a new
+    // GifWriter instance in order to get the binary GIF file
     function generateGIF(frames, callback) {
-        console.log('generate GIF', frames.length);
+        
         var buffer = new Uint8Array(width * height * frames.length * 5);
         var gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
         generatingGIF = true;
 
         frames.forEach(function(frame) {
-            console.log('generate GIF', frame.position, frame.done);
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
                 palette: frame.palette, 
                 delay: delay 
@@ -180,6 +163,7 @@ function Animated_GIF(options) {
         gifWriter.end();
         
         frames = [];
+        generatingGIF = false;
 
         callback(buffer);
     }
@@ -230,7 +214,6 @@ function Animated_GIF(options) {
     this.getBase64GIF = function(completeCallback) {
 
         var onRenderComplete = function(buffer) {
-            console.log('rendering complete');
             var str = bufferToString(buffer);
             var gif = 'data:image/gif;base64,' + btoa(str);
             completeCallback(gif);
