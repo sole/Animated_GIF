@@ -25,40 +25,41 @@
         <script src="src/NeuQuant.js"></script>
         <script src="src/Animated_GIF.js"></script>
         <script>
-            var imgs = document.querySelectorAll('img');
-            var agAll = new Animated_GIF();
-            agAll.setSize(500, 350);
-            agAll.setDelay(100);
+            window.onload = function() {
+                var imgs = document.querySelectorAll('img');
+                var agAll = new Animated_GIF();
+                agAll.setSize(500, 350);
+                agAll.setDelay(100);
 
-            for(var i = 0; i < 1 /*imgs.length*/; i++) {
+                for(var i = 0; i < imgs.length; i++) {
 
-                var img = imgs[i];
-                var ag = new Animated_GIF();
+                    var img = imgs[i];
+                    var ag = new Animated_GIF();
 
-                ag.setSize(img.clientWidth, img.clientHeight);
-                ag.addFrame(img);
-                agAll.addFrame(img);
+                    ag.setSize(img.clientWidth, img.clientHeight);
+                    ag.addFrame(img);
+                    agAll.addFrame(img);
 
-                var img2 = document.createElement('img');
-                ag.getBase64GIF(function(image) {
-                    img2.src = image;
-                });
-                
-                if(img.nextSibling) {
-                    img.parentNode.insertBefore(img2, img.nextSibling);
-                } else {
-                    img.parentNode.appendChild(img2);
+                    var img2 = document.createElement('img');
+                    ag.getBase64GIF(function(image) {
+                        img2.src = image;
+                    });
+
+                    if(img.nextSibling) {
+                        img.parentNode.insertBefore(img2, img.nextSibling);
+                        } else {
+                        img.parentNode.appendChild(img2);
+                    }
+
                 }
 
+                var imgAll = document.createElement('img');
+                agAll.getBase64GIF(function(image) {
+                    imgAll.src = image;
+                });
+                imgAll.style.display = 'block';
+                document.getElementById('sample_image').appendChild(imgAll);
             }
-
-            var imgAll = document.createElement('img');
-            agAll.getBase64GIF(function(image) {
-                imgAll.src = image;
-            });
-            imgAll.style.display = 'block';
-            document.getElementById('sample_image').appendChild(imgAll);
-
         </script>
     </body>
 </html>

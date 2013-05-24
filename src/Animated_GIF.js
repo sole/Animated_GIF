@@ -4,9 +4,10 @@
 //
 // @author sole / http://soledadpenades.com
 function Animated_GIF(options) {
+    'use strict';
+
     var width = 160, height = 120, canvas = null, ctx = null, repeat = 0, delay = 250;
-    var buffer, gifWriter;
-    var queuedFrames = [];
+    var frames = [];
     var onRenderCompleteCallback = function() {};
     var workers = [], availableWorkers = [], numWorkers, workerPath;
 
@@ -48,23 +49,20 @@ function Animated_GIF(options) {
     }
 
     function render(completeCallback) {
-        var numFrames = queuedFrames.length;
+        var numFrames = frames.length;
 
         onRenderCompleteCallback = completeCallback;
-//        buffer = new Uint8Array(width * height * numFrames * 5);
-//        gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
-        for(var i = 0; i < numWorkers && i < queuedFrames.length; i++) {
+        for(var i = 0; i < numWorkers && i < frames.length; i++) {
             console.log('setting initial work load', i);
             processNextFrame(i);
         }
-        // processNextFrame(0);
     }
 
     function processNextFrame(position) {
 
         console.log('processNextFrame', position);
-        var frame = queuedFrames[position];
+        var frame = frames[position];
         var worker = getWorker();
         
         worker.onmessage = function(ev) {
@@ -95,8 +93,14 @@ function Animated_GIF(options) {
 
         console.log('frame finished', frame.position);
 
-        if(frame.position === queuedFrames.length - 1) {
-            generateGIF(queuedFrames, onRenderCompleteCallback);
+        // The GIF is not written until we're done with all the frames
+        // because they might not be processed in the same order
+        var allDone = frames.every(function(frame) {
+            return frame.done;
+        });
+        
+        if(allDone) {
+            generateGIF(frames, onRenderCompleteCallback);
         } else {
             setTimeout(function() {
                 processNextFrame(frame.position + 1);
@@ -110,14 +114,15 @@ function Animated_GIF(options) {
         var buffer = new Uint8Array(width * height * frames.length * 5);
         var gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
-        for(var i = 0; i < frames.length; i++) {
-            var frame = frames[i];
-            gifWriter.addFrame(0, 0, width, height, frame.pixels, { palette: frame.palette, delay: delay });
-        }
+        frames.forEach(function(frame) {
+            gifWriter.addFrame(0, 0, width, height, frame.pixels, {
+                palette: frame.palette, 
+                delay: delay 
+            });
+        });
 
         gifWriter.end();
         callback(buffer);
-
     }
     
     // ---
@@ -150,7 +155,7 @@ function Animated_GIF(options) {
         }
 
         ctx.drawImage(element, 0, 0, width, height);
-        data = ctx.getImageData(0, 0, width, height);
+        var data = ctx.getImageData(0, 0, width, height);
         
         this.addFrameImageData(data.data);
     };
@@ -160,12 +165,8 @@ function Animated_GIF(options) {
         var dataLength = imageData.length,
             imageDataArray = new Uint8Array(imageData);
 
-        queuedFrames.push({ data: imageDataArray, done: false, position: queuedFrames.length });
-
+        frames.push({ data: imageDataArray, done: false, position: frames.length });
     };
-
-    
-    // TODO I like better the 'event emitter' approach for events, rendering etc
 
     this.getBase64GIF = function(completeCallback) {
 
