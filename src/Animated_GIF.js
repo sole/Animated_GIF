@@ -9,6 +9,7 @@ function Animated_GIF(options) {
     var width = 160, height = 120, canvas = null, ctx = null, repeat = 0, delay = 250;
     var frames = [];
     var onRenderCompleteCallback = function() {};
+    var onRenderProgressCallback = function() {};
     var workers = [], availableWorkers = [], numWorkers, workerPath;
     var generatingGIF = false;
 
@@ -156,6 +157,7 @@ function Animated_GIF(options) {
         generatingGIF = true;
 
         frames.forEach(function(frame) {
+            onRenderProgressCallback(frame.position * 1.0 / frames.length);
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
                 palette: frame.palette, 
                 delay: delay 
@@ -163,6 +165,7 @@ function Animated_GIF(options) {
         });
 
         gifWriter.end();
+        onRenderProgressCallback(1.0);
         
         frames = [];
         generatingGIF = false;
@@ -212,6 +215,10 @@ function Animated_GIF(options) {
             imageDataArray = new Uint8Array(imageData);
 
         frames.push({ data: imageDataArray, done: false, beingProcessed: false, position: frames.length });
+    };
+
+    this.onRenderProgress = function(callback) {
+        onRenderProgressCallback = callback;
     };
 
     this.getBase64GIF = function(completeCallback) {

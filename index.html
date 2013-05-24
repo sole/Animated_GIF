@@ -34,14 +34,14 @@
                 };
 
                 var imgs = document.querySelectorAll('img');
-                var agAll = new Animated_GIF();
+                var agAll = new Animated_GIF({ repeat: 0 }); // Repeat forever
                 agAll.setSize(500, 350);
-                agAll.setDelay(100);
+                agAll.setDelay(1000);
 
                 for(var i = 0; i < imgs.length; i++) {
 
                     var img = imgs[i];
-                    var ag = new Animated_GIF();
+                    var ag = new Animated_GIF({ repeat: null }); // Don't repeat
 
                     ag.setSize(img.clientWidth, img.clientHeight);
                     ag.addFrame(img);
@@ -60,6 +60,25 @@
                 }
 
                 var imgAll = document.createElement('img');
+                var lastRenderProgress = 0;
+
+                agAll.onRenderProgress(function(progress) {
+                    if(progress <= 0) {
+                        document.title = 'Rendering ' + Math.floor(progress*100) + '%';
+                    } else {
+                        document.title = 'Animated_GIF';
+                    }
+
+                    if(lastRenderProgress === 0) {
+                        lastRenderProgress = Date.now();
+                    }
+
+                    var t = Date.now();
+                    var elapsed = t - lastRenderProgress;
+                    lastRenderProgress = t;
+                    console.log(new Date().toISOString(), 'elapsed', elapsed, 'ms');
+                });
+
                 agAll.getBase64GIF(function(image) {
                     imgAll.src = image;
                 });
