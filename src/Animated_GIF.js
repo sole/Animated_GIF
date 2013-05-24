@@ -36,58 +36,27 @@ function Animated_GIF(options) {
         availableWorkers.push(worker);
     }
 
-    // ---
-
-    this.setSize = function(w, h) {
-        width = w;
-        height = h;
-        canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        ctx = canvas.getContext('2d');
-    };
-
-    this.setDelay = function(d) {
-        delay = d;
-    };
-
-    this.setRepeat = function(r) {
-        repeat = r;
-    };
-
-    this.setMaxNumColors = function(v) {
-        maxNumColors = v;
-    };
-
-    this.addFrame = function(element) {
-
-        ctx.drawImage(element, 0, 0, width, height);
-        data = ctx.getImageData(0, 0, width, height);
+    function bufferToString(buffer) {
+        var numberValues = buffer.length;
+        var str = '';
         
-        this.addFrameImageData(data.data);
-    };
+        for(var i = 0; i < numberValues; i++) {
+            str += String.fromCharCode( buffer[i] );
+        }
 
-    this.addFrameImageData = function(imageData) {
+        return str;
+    }
 
-        var dataLength = imageData.length,
-            imageDataArray = new Uint8Array(imageData);
-
-        queuedFrames.push({ data: imageDataArray, done: false, position: queuedFrames.length });
-
-    };
-
-    this.render = function(completeCallback) {
+    function render(completeCallback) {
         var numFrames = queuedFrames.length;
 
         onRenderCompleteCallback = completeCallback;
         buffer = new Uint8Array(width * height * numFrames * 5);
         gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
-        processNextFrame(0);
-        
-    };
+        processNextFrame(0);        
+    }
 
-    
     function processNextFrame(position) {
 
         console.log('processNextFrame', position);
@@ -137,34 +106,62 @@ function Animated_GIF(options) {
         }
         
     }
+    
+    // ---
 
-    // TODO I like better the 'event emitter' approach for events, rendering etc
-
-    this.bufferToString = function(buffer) {
-        var numberValues = buffer.length;
-        var str = '';
-        
-        for(var i = 0; i < numberValues; i++) {
-            str += String.fromCharCode( buffer[i] );
-        }
-
-        return str;
+    this.setSize = function(w, h) {
+        width = w;
+        height = h;
+        canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        ctx = canvas.getContext('2d');
     };
 
-    this.getBase64GIF = function(completeCallback) {
-        var self = this;
+    this.setDelay = function(d) {
+        delay = d;
+    };
 
-        this.render(function(buffer) {
+    this.setRepeat = function(r) {
+        repeat = r;
+    };
+
+    this.setMaxNumColors = function(v) {
+        maxNumColors = v;
+    };
+
+    this.addFrame = function(element) {
+
+        if(ctx === null) {
+            this.setSize(width, height);
+        }
+
+        ctx.drawImage(element, 0, 0, width, height);
+        data = ctx.getImageData(0, 0, width, height);
+        
+        this.addFrameImageData(data.data);
+    };
+
+    this.addFrameImageData = function(imageData) {
+
+        var dataLength = imageData.length,
+            imageDataArray = new Uint8Array(imageData);
+
+        queuedFrames.push({ data: imageDataArray, done: false, position: queuedFrames.length });
+
+    };
+
+    
+    // TODO I like better the 'event emitter' approach for events, rendering etc
+
+    this.getBase64GIF = function(completeCallback) {
+
+        render(function(buffer) {
             console.log('rendering complete');
-            var str = self.bufferToString(buffer);
+            var str = bufferToString(buffer);
             var gif = 'data:image/gif;base64,' + btoa(str);
             completeCallback(gif);
         });
     };
-
-
-    // ---
-    
-    this.setSize(width, height);
 
 }
