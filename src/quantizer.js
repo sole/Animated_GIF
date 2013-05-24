@@ -51,7 +51,6 @@ function run(data) {
 
 self.onmessage = function(ev) {
     var data = ev.data;
-    //postMessage(data);
     var response = run(data);
     postMessage(response);
 };
