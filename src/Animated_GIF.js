@@ -58,7 +58,7 @@ function Animated_GIF(options) {
         });
     })();
 
-    function render(completeCallback) {
+    function startRendering(completeCallback) {
         var numFrames = frames.length;
 
         onRenderCompleteCallback = completeCallback;
@@ -87,6 +87,7 @@ function Animated_GIF(options) {
         worker = getWorker();
 
         worker.onmessage = function(ev) {
+            console.log('worker: done', frame.position);
             var data = ev.data;
 
             // Delete original data, and free memory
@@ -100,7 +101,7 @@ function Animated_GIF(options) {
 
             freeWorker(worker);
 
-            onFrameFinished();
+            onFrameFinished(    );
         };
 
         
@@ -129,10 +130,6 @@ function Animated_GIF(options) {
 
         if(position >= 0) {
             processFrame(position);
-        } else {
-            //console.error('HUH');
-            //finishGIF();
-            onFrameFinished();
         }
     }
 
@@ -143,7 +140,7 @@ function Animated_GIF(options) {
         // The GIF is not written until we're done with all the frames
         // because they might not be processed in the same order
         var allDone = frames.every(function(frame) {
-            console.log('frame check', frame.position, 'P', frame.beingProcessed, 'D', frame.done);
+            console.log('frame check', frame.position, 'Processing=', frame.beingProcessed, 'Done=', frame.done);
             return !frame.beingProcessed && frame.done;
         });
 
@@ -239,7 +236,7 @@ function Animated_GIF(options) {
             completeCallback(gif);
         };
 
-        render(onRenderComplete);
+        startRendering(onRenderComplete);
 
     };
 
