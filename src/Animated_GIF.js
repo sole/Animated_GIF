@@ -189,12 +189,9 @@ function Animated_GIF(options) {
         delay = seconds * 0.1;
     };
 
+    // From GIF: 0 = loop forever, null = not looping, n > 0 = loop n times and stop
     this.setRepeat = function(r) {
         repeat = r;
-    };
-
-    this.setMaxNumColors = function(v) {
-        maxNumColors = v;
     };
 
     this.addFrame = function(element) {
