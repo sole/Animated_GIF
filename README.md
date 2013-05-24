@@ -7,7 +7,9 @@ Animated_GIF
 
 ```javascript
 var imgs = document.querySelectorAll('img');
-var ag = new Animated_GIF();
+
+// change workerPath to point to where quantizer.js is
+var ag = new Animated_GIF({ workerPath: 'js/quantizer.js' }); 
 ag.setSize(320, 240);
 
 for(var i = 0; i < imgs.length; i++) {
@@ -16,9 +18,11 @@ for(var i = 0; i < imgs.length; i++) {
 
 var animatedImage = document.createElement('img');
 
-animatedImage.href = ag.getB64GIF();
-
-document.body.appendChild(animatedImage);
+// This is asynchronous, rendered with WebWorkers
+ag.getB64GIF(function(image) {
+    animatedImage.src = image;
+    document.body.appendChild(animatedImage);
+});
 
 ```
 
