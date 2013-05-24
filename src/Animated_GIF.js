@@ -51,10 +51,14 @@ function Animated_GIF(options) {
         var numFrames = queuedFrames.length;
 
         onRenderCompleteCallback = completeCallback;
-        buffer = new Uint8Array(width * height * numFrames * 5);
-        gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
+//        buffer = new Uint8Array(width * height * numFrames * 5);
+//        gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
-        processNextFrame(0);        
+        for(var i = 0; i < numWorkers && i < queuedFrames.length; i++) {
+            console.log('setting initial work load', i);
+            processNextFrame(i);
+        }
+        // processNextFrame(0);
     }
 
     function processNextFrame(position) {
@@ -64,7 +68,6 @@ function Animated_GIF(options) {
         var worker = getWorker();
         
         worker.onmessage = function(ev) {
-            console.log('from the worker', ev.data);
             var data = ev.data;
 
             // Delete original data, and free memory
@@ -90,21 +93,31 @@ function Animated_GIF(options) {
 
     function onFrameFinished(frame) {
 
-        console.log('onFrameFinished', frame.pixels.length, frame.palette.length);
-        
-        gifWriter.addFrame(0, 0, width, height, frame.pixels, { palette: frame.palette, delay: delay });
-
         console.log('frame finished', frame.position);
 
         if(frame.position === queuedFrames.length - 1) {
-            gifWriter.end();
-            onRenderCompleteCallback(buffer);
+            generateGIF(queuedFrames, onRenderCompleteCallback);
         } else {
             setTimeout(function() {
                 processNextFrame(frame.position + 1);
-            });
+            }, 1);
         }
         
+    }
+
+    function generateGIF(frames, callback) {
+        console.log('generate GIF', frames.length);
+        var buffer = new Uint8Array(width * height * frames.length * 5);
+        var gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
+
+        for(var i = 0; i < frames.length; i++) {
+            var frame = frames[i];
+            gifWriter.addFrame(0, 0, width, height, frame.pixels, { palette: frame.palette, delay: delay });
+        }
+
+        gifWriter.end();
+        callback(buffer);
+
     }
     
     // ---
@@ -156,12 +169,15 @@ function Animated_GIF(options) {
 
     this.getBase64GIF = function(completeCallback) {
 
-        render(function(buffer) {
+        var onRenderComplete = function(buffer) {
             console.log('rendering complete');
             var str = bufferToString(buffer);
             var gif = 'data:image/gif;base64,' + btoa(str);
             completeCallback(gif);
-        });
+        };
+
+        render(onRenderComplete);
+
     };
 
 }
