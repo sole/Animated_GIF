@@ -148,7 +148,9 @@ function Animated_GIF(options) {
     // GifWriter instance in order to get the binary GIF file
     function generateGIF(frames, callback) {
         
-        var buffer = new Uint8Array(width * height * frames.length * 5);
+        // TODO: Weird: using a simple JS array instead of a typed array,
+        // the files are WAY smaller o_o. Patches/explanations welcome!
+        var buffer = []; // new Uint8Array(width * height * frames.length * 5);
         var gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
 
         generatingGIF = true;
@@ -179,8 +181,9 @@ function Animated_GIF(options) {
         ctx = canvas.getContext('2d');
     };
 
-    this.setDelay = function(d) {
-        delay = d;
+    // Internally, GIF uses tenths of seconds to store the delay
+    this.setDelay = function(seconds) {
+        delay = seconds * 0.1;
     };
 
     this.setRepeat = function(r) {
