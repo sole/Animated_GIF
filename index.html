@@ -30,7 +30,7 @@
             agAll.setSize(500, 350);
             agAll.setDelay(100);
 
-            for(var i = 0; i < imgs.length; i++) {
+            for(var i = 0; i < 1 /*imgs.length*/; i++) {
 
                 var img = imgs[i];
                 var ag = new Animated_GIF();
@@ -40,7 +40,9 @@
                 agAll.addFrame(img);
 
                 var img2 = document.createElement('img');
-                img2.src = ag.getB64GIF();
+                ag.getBase64GIF(function(image) {
+                    img2.src = image;
+                });
                 
                 if(img.nextSibling) {
                     img.parentNode.insertBefore(img2, img.nextSibling);
@@ -51,7 +53,9 @@
             }
 
             var imgAll = document.createElement('img');
-            imgAll.src = agAll.getB64GIF();
+            agAll.getBase64GIF(function(image) {
+                imgAll.src = image;
+            });
             imgAll.style.display = 'block';
             document.getElementById('sample_image').appendChild(imgAll);
 

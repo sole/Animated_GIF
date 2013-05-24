@@ -5,17 +5,20 @@
 // @author sole / http://soledadpenades.com
 function Animated_GIF() {
     var width = 160, height = 120, canvas = null, ctx = null, repeat = 0, delay = 250;
-    var buffer, gifWriter, pixels, numFrames, maxNumFrames = 100;
-    var currentPalette, currentPaletteArray, currentPaletteComponents, maxNumColors = 256;
+    var buffer, gifWriter; //, pixels; /*numFrames, maxNumFrames = 100,*/
+    var queuedFrames = [];
+    var onRenderCompleteCallback = function() {};
+    //var currentPalette, currentPaletteArray, currentPaletteComponents, maxNumColors = 256;
 
-    function allocateResources() {
-        var total = maxNumFrames;
+    function allocateResources(numFrames) {
+        //var total = maxNumFrames;
 
-        numFrames = 0;
-        buffer = new Uint8Array( width * height * total * 5 );
+        //numFrames = 0; // XXX
+        buffer = new Uint8Array( width * height * numFrames * 5 );
         gifWriter = new GifWriter( buffer, width, height, { loop: repeat } );
-        pixels = new Uint8Array( width * height );
-        currentPalette = null;
+        //pixels = new Uint8Array( width * height );
+        //currentPalette = null;
+        //queuedFrames = [];
     }
 
     this.setSize = function(w, h) {
@@ -25,7 +28,7 @@ function Animated_GIF() {
         canvas.width = w;
         canvas.height = h;
         ctx = canvas.getContext('2d');
-        allocateResources();
+        // allocateResources();
     };
 
     this.setDelay = function(d) {
@@ -41,14 +44,24 @@ function Animated_GIF() {
     };
 
     this.addFrame = function(element) {
-        if( numFrames >= maxNumFrames ) {
-            return;
-        }
 
         ctx.drawImage(element, 0, 0, width, height);
         data = ctx.getImageData(0, 0, width, height);
 
-        this.addFrameImageData(data);
+        // this.addFrameImageData(data);
+        var imageData = data.data,
+            dataLength = imageData.length,
+            //dataBuffer = new ArrayBuffer( dataLength / 4 ),
+            //imageDataArray = new Uint8Array( dataBuffer ),
+            //imageDataArray = new Uint8Array( dataLength ),
+            imageDataArray = new Uint8Array( imageData ),
+            i = 0;
+
+        /*while(i < dataLength) {
+            imageDataArray[i++] = imageData[i];
+        }*/
+        
+        queuedFrames.push({ data: imageDataArray, done: false, position: queuedFrames.length });
     };
 
     this.addFrameImageData = function(imageData) {
@@ -98,7 +111,72 @@ function Animated_GIF() {
 
     };
 
-    this.getGIF = function() {
+    this.render = function(completeCallback) {
+        // TODO allocateResources(); // TODO
+        // pixels[] -> in each 'worker'
+        // buffer, gifWriter -> in main
+        
+        var numFrames = queuedFrames.length;
+
+        onRenderCompleteCallback = completeCallback;
+        buffer = new Uint8Array(width * height * numFrames * 5);
+        gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
+
+
+        // TODO detect web worker support, fallback appropriately
+        processNextFrame(0);
+        
+    };
+
+    
+    function processNextFrame(position) {
+
+        console.log('processNextFrame', position);
+        var frame = queuedFrames[position];
+        var worker = new Worker('./src/quantizer.js'); // TODO not hardcoded path
+        
+        worker.onmessage = function(ev) {
+            console.log('from the worker', ev.data);
+            var data = ev.data;
+
+            // TODO grrr... HACK for object -> Array
+            frame.pixels = Array.prototype.slice.call(data.pixels);
+            frame.palette = Array.prototype.slice.call(data.palette);
+            frame.done = true;
+            onFrameFinished(frame);
+        };
+
+        // TODO maybe look into transfer objects
+        // for further efficiency
+        //worker.postMessage(frame);
+        var frameData = frame.data;
+        console.log('FRAME DATA', frameData);
+        //worker.postMessage(frameData, [frameData]);
+        worker.postMessage(frameData);
+        
+    }
+
+    function onFrameFinished(frame) {
+
+        console.log('onFrameFinished', frame.pixels.length, frame.palette.length);
+        
+        gifWriter.addFrame(0, 0, width, height, frame.pixels, { palette: frame.palette, delay: delay });
+        // TODO: and what about freeing the frame? that could actually be a good idea
+
+        console.log('frame finished', frame.position);
+
+        if(frame.position === queuedFrames.length - 1) {
+            gifWriter.end();
+            onRenderCompleteCallback(buffer);
+        } else {
+            setTimeout(function() {
+                processNextFrame(frame.position + 1);
+            });
+        }
+        
+    }
+
+    /*this.getGIF = function() {
         var numberValues = gifWriter.end();
         var str = '';
 
@@ -107,10 +185,30 @@ function Animated_GIF() {
         }
 
         return str;
+    };*/
+
+    // TODO I like better the 'event emitter' approach for events, rendering etc
+
+    this.bufferToString = function(buffer) {
+        var numberValues = buffer.length;
+        var str = '';
+console.log('bufferToString', numberValues);
+        for(var i = 0; i < numberValues; i++) {
+            str += String.fromCharCode( buffer[i] );
+        }
+
+        return str;
     };
 
-    this.getB64GIF = function() {
-        return 'data:image/gif;base64,' + btoa(this.getGIF());
+    this.getBase64GIF = function(completeCallback) {
+        var self = this;
+
+        this.render(function(buffer) {
+            console.log('rendering complete');
+            var str = self.bufferToString(buffer);
+            var gif = 'data:image/gif;base64,' + btoa(str);
+            completeCallback(gif);
+        });
     };
 
 
