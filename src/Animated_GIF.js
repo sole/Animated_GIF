@@ -218,6 +218,10 @@ function Animated_GIF(options) {
         onRenderProgressCallback = callback;
     };
 
+    this.isRendering = function() {
+        return generatingGIF;
+    };
+
     this.getBase64GIF = function(completeCallback) {
 
         var onRenderComplete = function(buffer) {
