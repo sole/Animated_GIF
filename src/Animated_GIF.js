@@ -140,7 +140,7 @@ function Animated_GIF(options) {
         onRenderProgressCallback(numRenderedFrames * 0.75 / frames.length);
 
         if(allDone) {
-            if(generatingGIF === false) {
+            if(!generatingGIF) {
                 generateGIF(frames, onRenderCompleteCallback);
             }
         } else {
