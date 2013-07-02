@@ -239,3 +239,9 @@ function Animated_GIF(options) {
     };
 
 }
+
+if(define) {
+    define([], function() {
+        return Animated_GIF;
+    });
+}
