@@ -19,7 +19,7 @@ for(var i = 0; i < imgs.length; i++) {
 var animatedImage = document.createElement('img');
 
 // This is asynchronous, rendered with WebWorkers
-ag.getB64GIF(function(image) {
+ag.getBase64GIF(function(image) {
     animatedImage.src = image;
     document.body.appendChild(animatedImage);
 });
