@@ -240,7 +240,7 @@ function Animated_GIF(options) {
 
 }
 
-if(define) {
+if(typeof define === "function" && define.amd) {
     define([], function() {
         return Animated_GIF;
     });
