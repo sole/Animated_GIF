@@ -6,6 +6,8 @@
 function Animated_GIF(options) {
     'use strict';
 
+    var GifWriter = require('./omggif').GifWriter;
+
     var width = 160, height = 120, canvas = null, ctx = null, repeat = 0, delay = 250;
     var frames = [];
     var numRenderedFrames = 0;
@@ -16,7 +18,7 @@ function Animated_GIF(options) {
 
     options = options || {};
     numWorkers = options.numWorkers || 2;
-    workerPath = options.workerPath || 'src/quantizer.js'; // XXX hardcoded path
+    workerPath = options.workerPath || 'Animated_GIF.worker.js'; // TODO possible to find our path?
 
     for(var i = 0; i < numWorkers; i++) {
         var w = new Worker(workerPath);
@@ -240,8 +242,6 @@ function Animated_GIF(options) {
 
 }
 
-if(define) {
-    define([], function() {
-        return Animated_GIF;
-    });
-}
+// Not using the full blown exporter because this is supposed to be built
+// into dist/Animated_GIF.js using a build step with browserify
+module.exports = Animated_GIF;

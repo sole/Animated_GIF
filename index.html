@@ -1,90 +1,156 @@
 <!doctype html>
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Animated_GIF</title>
-    </head>
-    <body>
-        <h1>Animated_GIF</h1>
-        <p>A library that makes creating animated GIFs easy. Everything is client-side, using JavaScript.</p>
-        <p><a href="https://github.com/sole/Animated_GIF/">Get the source</a> and start animating today!</p>
-        <div id="sample_image"></div>
+  <head>
+    <meta charset="utf-8">
+    <title>Animated_GIF</title>
+  </head>
+  <body>
+    <h1>Animated_GIF</h1>
+    <p>A library that makes creating animated GIFs easy. Everything is client-side, using JavaScript.</p>
+    <p><a href="https://github.com/sole/Animated_GIF/">Get the source</a> and start animating today!</p>
 
-        <h2>Sample images</h2>
+    <p id="status"></p>
 
-        <img src="images/2687824939_6e3690d51d_z.jpg" alt="parakeets" />
-        <p>Picture by <a href="http://www.flickr.com/photos/petehogan/2687824939/">petehogan</a></p>
+    <div id="sample_image"></div>
 
-        <img src="images/4878878197_31de9837ba_z.jpg" alt="sad kitten" />
-        <p>Picture by <a href="http://www.flickr.com/photos/bjornlifoto/4878878197/">bjornlifoto</a></p>
+    <h2>Sample images</h2>
 
-        <img src="images/5663357414_001d1ce705_z.jpg" alt="terrapin" />
-        <p>Picture by <a href="http://www.flickr.com/photos/tomsoperphotography/5663357414/">tom soper</a></p>
+    <img src="images/2687824939_6e3690d51d_z.jpg" alt="parakeets" />
+    <p>Picture by <a href="http://www.flickr.com/photos/petehogan/2687824939/">petehogan</a></p>
 
-        <script src="src/omggif.js"></script>
-        <script src="src/NeuQuant.js"></script>
-        <script src="src/Animated_GIF.js"></script>
-        <script>
-            window.onload = function() {
+    <img src="images/4878878197_31de9837ba_z.jpg" alt="sad kitten" />
+    <p>Picture by <a href="http://www.flickr.com/photos/bjornlifoto/4878878197/">bjornlifoto</a></p>
 
-                function buildImageCallback(img) {
-                    return function(gif) {
-                        img.src = gif;
-                    }
-                };
+    <img src="images/5663357414_001d1ce705_z.jpg" alt="terrapin" />
+    <p>Picture by <a href="http://www.flickr.com/photos/tomsoperphotography/5663357414/">tom soper</a></p>
 
-                var imgs = document.querySelectorAll('img');
-                var agAll = new Animated_GIF({ repeat: 0 }); // Repeat forever
-                agAll.setSize(500, 350);
-                agAll.setDelay(1000);
+    <script src="dist/Animated_GIF.js"></script>
 
-                for(var i = 0; i < imgs.length; i++) {
+    <script>
+      window.onload = function() {
 
-                    var img = imgs[i];
-                    var ag = new Animated_GIF({ repeat: null }); // Don't repeat
+        var imgs = document.querySelectorAll('img');
+        var firstImage = imgs[0];
+        var imageWidth = firstImage.clientWidth;
+        var imageHeight = firstImage.clientHeight;
+        var tasks = [];
+        var status = document.getElementById('status');
 
-                    ag.setSize(img.clientWidth, img.clientHeight);
-                    ag.addFrame(img);
-                    agAll.addFrame(img);
 
-                    var img2 = document.createElement('img');
-                    if(img.nextSibling) {
-                        img.parentNode.insertBefore(img2, img.nextSibling);
-                    } else {
-                        img.parentNode.appendChild(img2);
-                    }
+        function buildImageCallback(img) {
+          return function(gif) {
+            img.src = gif;
+          }
+        }
 
-                    var imageCallback = buildImageCallback(img2);
-                    ag.getBase64GIF(imageCallback);
-                    
-                }
 
-                var imgAll = document.createElement('img');
-                var lastRenderProgress = 0;
+        function getBuildGIFTask(img) {
+          return function(doneCallback) {
+            var ag = new Animated_GIF({ repeat: null, workerPath: 'dist/Animated_GIF.worker.js' }); // Don't repeat
+            ag.setSize(img.clientWidth, img.clientHeight);
+            ag.addFrame(img);
 
-                agAll.onRenderProgress(function(progress) {
-                    if(progress <= 0) {
-                        document.title = 'Rendering ' + Math.floor(progress*100) + '%';
-                    } else {
-                        document.title = 'Animated_GIF';
-                    }
-
-                    if(lastRenderProgress === 0) {
-                        lastRenderProgress = Date.now();
-                    }
-
-                    var t = Date.now();
-                    var elapsed = t - lastRenderProgress;
-                    lastRenderProgress = t;
-                    console.log(new Date().toISOString(), 'elapsed', elapsed, 'ms');
-                });
-
-                agAll.getBase64GIF(function(image) {
-                    imgAll.src = image;
-                });
-                imgAll.style.display = 'block';
-                document.getElementById('sample_image').appendChild(imgAll);
+            var img2 = document.createElement('img');
+            if(img.nextSibling) {
+              img.parentNode.insertBefore(img2, img.nextSibling);
+              } else {
+              img.parentNode.appendChild(img2);
             }
-        </script>
-    </body>
+
+            ag.getBase64GIF(function(gif) {
+              var originalSrc = img.src;
+              img.addEventListener('mouseenter', function() {
+                img.src = gif;
+              }, false);
+              img.addEventListener('mouseleave', function() {
+                img.src = originalSrc;
+              }, false);
+              doneCallback();
+            });
+
+
+          }
+        };
+
+
+        function runTasks(tasks) {
+
+          var nextTaskIndex = 0;
+
+          runNextTask();
+
+          //
+
+          function runNextTask() {
+
+            if(nextTaskIndex < tasks.length) {
+
+              console.log('running task', nextTaskIndex);
+              var task = tasks[nextTaskIndex];
+              task(function() {
+                nextTaskIndex++;
+                setTimeout(runNextTask, 100);
+              });
+
+            }
+
+          }
+
+        }
+
+        //
+
+        tasks.push(function(doneCallback) {
+
+          var agAll = new Animated_GIF({ repeat: 0, workerPath: 'dist/Animated_GIF.worker.js' }); // repeat 0 = Repeat forever
+          agAll.setSize(imageWidth, imageHeight);
+          agAll.setDelay(1000);
+
+          for(var i = 0; i < imgs.length; i++) {
+            var img = imgs[i];
+            agAll.addFrame(img);
+          }
+
+          var imgAll = document.createElement('img');
+          var lastRenderProgress = Date.now();
+
+          agAll.onRenderProgress(function(progress) {
+            var t = Date.now();
+            var elapsed = t - lastRenderProgress;
+            lastRenderProgress = t;
+            status.innerHTML = (new Date().toISOString() + ' elapsed ' + elapsed + ' ms');
+          });
+
+          agAll.getBase64GIF(function(image) {
+            imgAll.src = image;
+            doneCallback();
+          });
+
+          imgAll.style.display = 'block';
+
+          document.getElementById('sample_image').appendChild(imgAll);
+
+        });
+
+
+        for(var i = 0; i < imgs.length; i++) {
+          tasks.push(getBuildGIFTask(imgs[i]));
+        }
+
+
+        runTasks(tasks, function() {
+          status.innerHTML = 'All done!';
+        });
+
+      }
+    </script>
+    <style>
+      #status {
+        font-family: Courier, mono;
+        font-size: 1.2rem;
+        background: #ccc;
+        padding: 1rem;
+      }
+    </style>
+  </body>
 </html>

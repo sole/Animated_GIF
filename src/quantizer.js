@@ -1,4 +1,3 @@
-importScripts('NeuQuant.js');
 
 function run(data) {
     var length = Object.keys(data).length;
