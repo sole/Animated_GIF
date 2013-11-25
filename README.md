@@ -8,8 +8,8 @@ Animated_GIF
 ```javascript
 var imgs = document.querySelectorAll('img');
 
-// change workerPath to point to where quantizer.js is
-var ag = new Animated_GIF({ workerPath: 'js/quantizer.js' }); 
+// change workerPath to point to where Animated_GIF.worker.js is
+var ag = new Animated_GIF({ workerPath: 'dist/Animated_GIF.worker.js' }); 
 ag.setSize(320, 240);
 
 for(var i = 0; i < imgs.length; i++) {
@@ -25,6 +25,8 @@ ag.getBase64GIF(function(image) {
 });
 
 ```
+
+You can also use minified versions in `dist/`.
 
 ### Credits ###
 
