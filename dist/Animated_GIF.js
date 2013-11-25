@@ -242,12 +242,7 @@ function Animated_GIF(options) {
     };
 
 }
-/*
-if(define) {
-    define([], function() {
-        return Animated_GIF;
-    });
-}*/
+
 // Not using the full blown exporter because this is supposed to be built
 // into dist/Animated_GIF.js using a build step with browserify
 module.exports = Animated_GIF;
@@ -260,8 +255,6 @@ module.exports = Animated_GIF;
     // Supposedly should make the bundle compatible with require.js
     if(typeof define === 'function' && define.amd) {
         define(function() { return Animated_GIF; });
-    /*} else if(typeof module !== 'undefined' && module.exports) {
-        module.exports = Animated_GIF;*/
     } else {
         // Otherwise just tuck it into the window object
         window.Animated_GIF = Animated_GIF;
