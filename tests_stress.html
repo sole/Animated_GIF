@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Animated_GIF - stress test</title>
+  </head>
+  <body>
+    <h1>Animated_GIF - stress test</h1>
+    <p>A library that makes creating animated GIFs easy. Everything is client-side, using JavaScript.</p>
+    <p><a href="https://github.com/sole/Animated_GIF/">Get the source</a> and start animating today!</p>
+
+    <p id="status"></p>
+
+    <canvas id="animation" width="200" height="200"></canvas>
+    
+    <div id="images">
+
+    </div>
+
+    <script src="dist/Animated_GIF.js"></script>
+
+    <script src="tests_stress.js"></script>
+    <style>
+      #status {
+        font-family: Courier, mono;
+        font-size: 1.2rem;
+        background: #ccc;
+        padding: 1rem;
+      }
+
+      #images {
+        height: 200px;
+        overflow-y: auto;
+      }
+
+    </style>
+  </body>
+</html>
