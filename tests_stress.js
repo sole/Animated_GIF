@@ -60,7 +60,14 @@ window.onload = function() {
         var ag = new Animated_GIF({ repeat: null, workerPath: 'dist/Animated_GIF.worker.js' });
         ag.setSize(width, height);
         ag.addFrame(canvasAnimation);
-        ag.getBase64GIF(onGIFRendered);
+        ag.getBase64GIF(function(gif) {
+            // Telling the object to free its resources because otherwise Bad Things happen
+            // if the GC doesn't free things quick enough
+            ag.destroy();
+
+            // And actually doing something with the rendered GIF
+            onGIFRendered(gif);
+        });
 
         iterations++;
 

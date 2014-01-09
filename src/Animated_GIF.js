@@ -240,6 +240,17 @@ function Animated_GIF(options) {
 
     };
 
+    // Once this function is called, the object becomes unusable
+    // and you'll need to create a new one.
+    this.destroy = function() {
+
+        // Explicitly ask web workers to die so they are explicitly GC'ed
+        workers.forEach(function(w) {
+            w.terminate();
+        });
+        
+    };
+
 }
 
 // Not using the full blown exporter because this is supposed to be built

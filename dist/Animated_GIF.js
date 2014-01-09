@@ -241,6 +241,15 @@ function Animated_GIF(options) {
 
     };
 
+    this.destroy = function() {
+
+        // Explicitly ask web workers to die so they are explicitly GC'ed
+        workers.forEach(function(w) {
+            w.terminate();
+        });
+        
+    };
+
 }
 
 // Not using the full blown exporter because this is supposed to be built
