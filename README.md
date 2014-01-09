@@ -5,6 +5,8 @@ Animated_GIF
 
 ### How to use it? ###
 
+Include `dist/Animated_GIF.js` in your HTML.
+
 ```javascript
 var imgs = document.querySelectorAll('img');
 
@@ -26,7 +28,18 @@ ag.getBase64GIF(function(image) {
 
 ```
 
-You can also use minified versions in `dist/`.
+If you instance lots of `Animated_GIF` objects, it's strongly recommended that you call their `destroy` method once you're done rendering the GIFs, as browsers don't seem to be happy otherwise. See the [stress test](tests_stress.html) for an example of this in use!
+
+### Minified versions
+
+You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`. Remember to set the worker path to `dist/Animated_GIF.worker.min.js`!
+
+### Tests and examples ###
+
+Check the tests_* files:
+
+* [Basic](tests_basic.html)
+* [Stress](tests_stress.html)
 
 ### Credits ###
 
