@@ -1,9 +1,8 @@
-Animated_GIF
-============
+# Animated_GIF
 
-#### Javascript library for creating animated GIFs ####
+_A Javascript library for creating animated GIFs_
 
-### How to use it? ###
+## How to use it?
 
 Include `dist/Animated_GIF.js` in your HTML.
 
@@ -30,18 +29,25 @@ ag.getBase64GIF(function(image) {
 
 If you instance lots of `Animated_GIF` objects, it's strongly recommended that you call their `destroy` method once you're done rendering the GIFs, as browsers don't seem to be happy otherwise. See the [stress test](tests_stress.html) for an example of this in use!
 
-### Minified versions
+## Minified versions
 
 You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`. Remember to set the worker path to `dist/Animated_GIF.worker.min.js`!
 
-### Tests and examples ###
+## Tests and examples
 
 Check the tests_* files:
 
-* [Basic](tests_basic.html)
-* [Stress](tests_stress.html)
+* [Basic](http://sole.github.io/Animated_GIF/tests_basic.html)
+* [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
 
-### Credits ###
+## See it in action
+
+Some sites and apps using it:
+
+* [chat.meatspac.es](http://chat.meatspac.es)
+* [rtcamera](http://rtcamera.apps.5013.es/)
+
+## Credits
 
 * Anthony Dekker's [NeuQuant](http://members.ozemail.com.au/~dekker/NEUQUANT.HTML) image quantization algorithm which was ported from C into Java by Kevin Weiner and then to [ActionScript 3](http://www.bytearray.org/?p=93) by Thibault Imbert, and to [JavaScript](http://antimatter15.com/wp/2010/07/javascript-to-animated-gif/) by antimatter15, and fixed, patched and revised by [sole](http://soledadpenades.com).
 * Dean McNamee's [omggif](https://github.com/deanm/omggif) library - for actually encoding into GIF89
