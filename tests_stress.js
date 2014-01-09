@@ -24,7 +24,7 @@ window.onload = function() {
 
         var now = Date.now();
 
-        if(iterations >= 50) {
+        if(iterations >= 200) {
             return;
         }
 
