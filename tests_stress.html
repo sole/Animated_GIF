@@ -11,15 +11,16 @@
 
     <p id="status"></p>
 
-    <canvas id="animation" width="200" height="200"></canvas>
-    
-    <div id="images">
-
+    <div id="container">
+      <div>
+        <canvas id="animation" width="50" height="50"></canvas>
+      </div>
+      <div id="images"></div>
     </div>
 
     <script src="dist/Animated_GIF.js"></script>
-
     <script src="tests_stress.js"></script>
+
     <style>
       #status {
         font-family: Courier, mono;
@@ -28,11 +29,15 @@
         padding: 1rem;
       }
 
-      #images {
-        height: 200px;
-        overflow-y: auto;
+      #container {
+        display: flex;
+        flex-direction: row;
       }
 
+      #images {
+        height: 100px;
+        overflow-y: auto;
+      }
     </style>
   </body>
 </html>
