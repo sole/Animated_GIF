@@ -2,15 +2,17 @@ window.onload = function() {
 
     var statusDiv = document.getElementById('status');
     var imagesDiv = document.getElementById('images');
-    var canvasAnimation = document.getElementById('animation');
-    var width = canvasAnimation.offsetWidth;
-    var height = canvasAnimation.offsetHeight;
+    var canvasAnimation = document.createElement('canvas');
+    var width = 50;
+    var height = 50;
     var lastTraceLogTimestamp = 0;
     var lastCaptureTime = 0;
-
     var ctxAnimation = canvasAnimation.getContext('2d');
     var textColors = ['black', 'white'];
     var iterations = 0;
+
+    canvasAnimation.width = width;
+    canvasAnimation.height = height;
 
     ctxAnimation.textAlign = 'center';
     ctxAnimation.textBaseline = 'middle';
@@ -58,16 +60,17 @@ window.onload = function() {
         var ag = new Animated_GIF({ repeat: null, workerPath: 'dist/Animated_GIF.worker.js' });
         ag.setSize(width, height);
         ag.addFrame(canvasAnimation);
-
-        ag.getBase64GIF(function(gif) {
-            var img = document.createElement('img');
-            img.src = gif;
-            imagesDiv.appendChild(img);
-            setTimeout(captureGIF, 10);
-        });
+        ag.getBase64GIF(onGIFRendered);
 
         iterations++;
 
+    }
+
+    function onGIFRendered(gif) {
+        var img = document.createElement('img');
+        img.src = gif;
+        imagesDiv.appendChild(img);
+        setTimeout(captureGIF, 10);
     }
 
     function setStatus(msg) {
