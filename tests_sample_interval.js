@@ -35,7 +35,7 @@ window.onload = function() {
 			var now = Date.now();
 			var elapsed = ((now - lastTime) * 0.001).toFixed(2);
 			var div = document.createElement('div');
-			var statusText = 'Iteration ' + i + ', sampleInterval = ' + sampleInterval + ' / elapsed = ' + elapsed;
+			var statusText = 'Iteration ' + i + ', sampleInterval = ' + sampleInterval + ' / GIF length = ' + gif.length + ' elapsed = ' + elapsed;
 			div.innerHTML = '<h3>' + statusText + '</h3>';
 
 			statusDiv.innerHTML = statusText;

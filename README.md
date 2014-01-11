@@ -33,12 +33,21 @@ If you instance lots of `Animated_GIF` objects, it's strongly recommended that y
 
 You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`. Remember to set the worker path to `dist/Animated_GIF.worker.min.js`!
 
+## Available options
+
+These are set when creating an `Animated_GIF` instance:
+
+* `sampleInterval`: how many pixels to skip when creating the palette. Default is 10. Less is better, but slower.
+* `numWorkers`: how many workers to use. Default is 2.
+* `workerPath`: path to the `Animated_GIF.worker.js` file (or `Animated_GIF.worker.min.js`). Default is `dist/Animated_GIF.worker.js`, change accordingly if you place the files somewhere else than `dist`.
+
 ## Tests and examples
 
 Check the tests_* files:
 
 * [Basic](http://sole.github.io/Animated_GIF/tests_basic.html)
 * [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
+* [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
 
 ## See it in action
 
