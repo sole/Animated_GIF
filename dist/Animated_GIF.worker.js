@@ -597,13 +597,14 @@ function NeuQuant() {
     return exports;
 }
 
-function run(data) {
+function run(frame) {
+    var data = frame.data;
     var length = Object.keys(data).length;
     var numberPixels = length / 4; // 4 components = rgba
-    var sampleInterval = 10;
+    var sampleInterval = frame.sampleInterval;
     var bgrPixels = [];
     var offset = 0;
-    var i, r, g, b;
+    var r, g, b;
     var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
 
     // extract RGB values into BGR for the quantizer
@@ -623,7 +624,7 @@ function run(data) {
     var paletteBGR = nq.process(); // create reduced palette
     var palette = [];
 
-    for(i = 0; i < paletteBGR.length; i+=3) {
+    for(var i = 0; i < paletteBGR.length; i += 3) {
         b = paletteBGR[i];
         g = paletteBGR[i+1];
         r = paletteBGR[i+2];

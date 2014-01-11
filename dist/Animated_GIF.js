@@ -14,10 +14,12 @@ function Animated_GIF(options) {
     var numRenderedFrames = 0;
     var onRenderCompleteCallback = function() {};
     var onRenderProgressCallback = function() {};
+    var sampleInterval;
     var workers = [], availableWorkers = [], numWorkers, workerPath;
     var generatingGIF = false;
 
     options = options || {};
+    sampleInterval = options.sampleInterval || 10;
     numWorkers = options.numWorkers || 2;
     workerPath = options.workerPath || 'Animated_GIF.worker.js'; // TODO possible to find our path?
 
@@ -85,6 +87,7 @@ function Animated_GIF(options) {
             return;
         }
 
+        frame.sampleInterval = sampleInterval;
         frame.beingProcessed = true;
         
         worker = getWorker();
@@ -107,11 +110,12 @@ function Animated_GIF(options) {
         };
 
         
-        // TODO maybe look into transfer objects
-        // for further efficiency
-        var frameData = frame.data;
+        // TODO transfer objects should be more efficient
+        /*var frameData = frame.data;
         //worker.postMessage(frameData, [frameData]);
-        worker.postMessage(frameData);
+        worker.postMessage(frameData);*/
+
+        worker.postMessage(frame);
     }
 
     function processNextFrame() {
@@ -241,6 +245,8 @@ function Animated_GIF(options) {
 
     };
 
+    // Once this function is called, the object becomes unusable
+    // and you'll need to create a new one.
     this.destroy = function() {
 
         // Explicitly ask web workers to die so they are explicitly GC'ed
