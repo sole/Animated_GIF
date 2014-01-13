@@ -1,4 +1,4 @@
-cat NeuQuant.js Animated_GIF.worker.js > ../dist/Animated_GIF.worker.js
+cat Dithering.js NeuQuant.js Animated_GIF.worker.js > ../dist/Animated_GIF.worker.js
 browserify main.js > ../dist/Animated_GIF.js
 
 # minified versions too
