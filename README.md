@@ -49,6 +49,14 @@ Check the tests_* files:
 * [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
 
+## Rebuild dist files
+
+To rebuild the files in `dist/`, use [NPM](http://nodejs.org/):
+```
+npm install
+npm run build
+```
+
 ## See it in action
 
 Some sites and apps using it:
