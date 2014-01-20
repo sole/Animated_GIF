@@ -621,7 +621,8 @@ function run(frame) {
 
     var nq = new NeuQuant(bgrPixels, bgrPixels.length, sampleInterval);
 
-    var paletteBGR = nq.process(); // create reduced palette
+    // Create reduced palette first, using a quantizer
+    var paletteBGR = nq.process();
     var palette = [];
 
     for(var i = 0; i < paletteBGR.length; i += 3) {
@@ -632,6 +633,7 @@ function run(frame) {
     }
     var paletteArray = new Uint32Array(palette);
 
+    // Then map each original pixel to the closest colour in the palette
     var k = 0;
     for (var j = 0; j < numberPixels; j++) {
         b = bgrPixels[k++];
