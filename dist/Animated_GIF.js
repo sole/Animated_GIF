@@ -1,4 +1,4 @@
-;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // A library/utility for generating GIF files
 // Uses Dean McNamee's omggif library
 // and Anthony Dekker's NeuQuant quantizer (JS 0.3 version with many fixes)
@@ -9,7 +9,9 @@ function Animated_GIF(options) {
 
     var GifWriter = require('./omggif').GifWriter;
 
-    var width = 160, height = 120, canvas = null, ctx = null, repeat = 0, delay = 250;
+    var width = options.width || 160;
+    var height = options.height || 120;
+    var canvas = null, ctx = null, repeat = 0, delay = 250;
     var frames = [];
     var numRenderedFrames = 0;
     var onRenderCompleteCallback = function() {};
@@ -80,7 +82,7 @@ function Animated_GIF(options) {
         var worker;
 
         frame = frames[position];
-        
+
         if(frame.beingProcessed || frame.done) {
             console.error('Frame already being processed or done!', frame.position);
             onFrameFinished();
@@ -89,7 +91,7 @@ function Animated_GIF(options) {
 
         frame.sampleInterval = sampleInterval;
         frame.beingProcessed = true;
-        
+
         worker = getWorker();
 
         worker.onmessage = function(ev) {
@@ -109,7 +111,7 @@ function Animated_GIF(options) {
             onFrameFinished();
         };
 
-        
+
         // TODO transfer objects should be more efficient
         /*var frameData = frame.data;
         //worker.postMessage(frameData, [frameData]);
@@ -129,7 +131,7 @@ function Animated_GIF(options) {
                 break;
             }
         }
-        
+
         if(position >= 0) {
             processFrame(position);
         }
@@ -153,13 +155,13 @@ function Animated_GIF(options) {
         } else {
             setTimeout(processNextFrame, 1);
         }
-        
+
     }
 
     // Takes the already processed data in frames and feeds it to a new
     // GifWriter instance in order to get the binary GIF file
     function generateGIF(frames, callback) {
-        
+
         // TODO: Weird: using a simple JS array instead of a typed array,
         // the files are WAY smaller o_o. Patches/explanations welcome!
         var buffer = []; // new Uint8Array(width * height * frames.length * 5);
@@ -170,20 +172,20 @@ function Animated_GIF(options) {
         frames.forEach(function(frame) {
             onRenderProgressCallback(0.75 + 0.25 * frame.position * 1.0 / frames.length);
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
-                palette: frame.palette, 
-                delay: delay 
+                palette: frame.palette,
+                delay: delay
             });
         });
 
         gifWriter.end();
         onRenderProgressCallback(1.0);
-        
+
         frames = [];
         generatingGIF = false;
 
         callback(buffer);
     }
-    
+
     // ---
 
     this.setSize = function(w, h) {
@@ -213,7 +215,7 @@ function Animated_GIF(options) {
 
         ctx.drawImage(element, 0, 0, width, height);
         var data = ctx.getImageData(0, 0, width, height);
-        
+
         this.addFrameImageData(data.data);
     };
 
@@ -253,7 +255,7 @@ function Animated_GIF(options) {
         workers.forEach(function(w) {
             w.terminate();
         });
-        
+
     };
 
 }
@@ -1010,4 +1012,3 @@ try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) { 
 
 
 },{}]},{},[2])
-;
