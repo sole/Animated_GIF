@@ -2,6 +2,8 @@
 
 _A Javascript library for creating animated GIFs_
 
+**Version 0.0.1**
+
 ## How to use it?
 
 Include `dist/Animated_GIF.js` in your HTML.
@@ -49,13 +51,19 @@ Check the tests_* files:
 * [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
 
-## Rebuild dist files
+## Rebuild `dist` files
 
-To rebuild the files in `dist/`, use [NPM](http://nodejs.org/):
+If you made changes in the library and need to rebuild the files in `dist/`, you need to use our [node.js](http://nodejs.org/)-based script to regenerate those files.
+
+Once node.js is installed in your system, do:
+
 ```
-npm install
-npm run build
+cd Animated_GIF     # or however you cloned the library to
+npm install         # this pulls dependencies for building (uglify, browserify)
+npm run build       # and this actually builds
 ```
+
+Once you do the initial two steps you just need to execute `npm run build` whenever you change things and want to rebuild the files in `dist/`.
 
 ## See it in action
 
@@ -66,5 +74,13 @@ Some sites and apps using it:
 
 ## Credits
 
+We're using these two fantastic libraries to do GIF stuff:
+
 * Anthony Dekker's [NeuQuant](http://members.ozemail.com.au/~dekker/NEUQUANT.HTML) image quantization algorithm which was ported from C into Java by Kevin Weiner and then to [ActionScript 3](http://www.bytearray.org/?p=93) by Thibault Imbert, and to [JavaScript](http://antimatter15.com/wp/2010/07/javascript-to-animated-gif/) by antimatter15, and fixed, patched and revised by [sole](http://soledadpenades.com).
 * Dean McNamee's [omggif](https://github.com/deanm/omggif) library - for actually encoding into GIF89
+
+And then, to build the `dist` files
+
+* node.js
+* uglify
+* browserify
