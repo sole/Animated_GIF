@@ -5,6 +5,7 @@ window.onload = function() {
 
 	var i = 0;
     var palettes = [
+        null,
         [ 0xFFFFFF, 0x000000 ],
         [ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ],
         [ 0xFF0000, 0xFF00FF, 0xFFFFFF, 0x000000 ]

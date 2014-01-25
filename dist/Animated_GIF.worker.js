@@ -777,15 +777,25 @@ function run(frame) {
     var rgbComponents = dataToRGB( data, width, height );
 
     // Build palette or use provided
-    // IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
+
     // var palette = [ 0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFFFF ]; // TMP
     
     if(palette === null) {
 
+        var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
+        var paletteRGB = nq.process();
+        palette = [];
+
+        for(var i = 0; i < paletteRGB.length; i += 3) {
+            r = paletteRGB[ i ];
+            g = paletteRGB[ i + 1 ];
+            b = paletteRGB[ i + 2 ];
+            palette.push(r << 16 | g << 8 | b);
+        }
+
     }
 
-    // TODO 2..256 palette
-
+    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
 
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );
