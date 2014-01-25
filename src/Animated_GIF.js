@@ -10,6 +10,7 @@ function Animated_GIF(options) {
 
     var width = options.width || 160;
     var height = options.height || 120;
+    var palette = options.palette || null;
     var canvas = null, ctx = null, repeat = 0, delay = 250;
     var frames = [];
     var numRenderedFrames = 0;
@@ -223,7 +224,7 @@ function Animated_GIF(options) {
         var dataLength = imageData.length,
             imageDataArray = new Uint8Array(imageData.data);
 
-        frames.push({ data: imageDataArray, width: imageData.width, height: imageData.height, done: false, beingProcessed: false, position: frames.length });
+        frames.push({ data: imageDataArray, width: imageData.width, height: imageData.height, done: false, beingProcessed: false, position: frames.length, palette: palette });
     };
 
     this.onRenderProgress = function(callback) {

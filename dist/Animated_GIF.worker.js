@@ -722,11 +722,13 @@ function dataToRGB( data, width, height ) {
     return rgb;
 }
 
+// ~~~
 
 function run(frame) {
     var data = frame.data;
     var width = frame.width;
     var height = frame.height;
+    var palette = frame.palette;
     var length = Object.keys(data).length; // !!! TODO width * height * 4?
     var numberPixels = length / 4; // 4 components = rgba
     var sampleInterval = frame.sampleInterval;
@@ -775,7 +777,16 @@ function run(frame) {
     var rgbComponents = dataToRGB( data, width, height );
 
     // Build palette or use provided
-    var palette = [ 0xFF000000, 0xFFFFFFFF ]; // TMP
+    // IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
+    // var palette = [ 0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFFFF ]; // TMP
+    
+    if(palette === null) {
+
+    }
+
+    // TODO 2..256 palette
+
+
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );
 
