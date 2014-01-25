@@ -214,17 +214,17 @@ function Animated_GIF(options) {
         }
 
         ctx.drawImage(element, 0, 0, width, height);
-        var data = ctx.getImageData(0, 0, width, height);
+        var imageData = ctx.getImageData(0, 0, width, height);
 
-        this.addFrameImageData(data.data);
+        this.addFrameImageData(imageData);
     };
 
     this.addFrameImageData = function(imageData) {
 
         var dataLength = imageData.length,
-            imageDataArray = new Uint8Array(imageData);
+            imageDataArray = new Uint8Array(imageData.data);
 
-        frames.push({ data: imageDataArray, done: false, beingProcessed: false, position: frames.length });
+        frames.push({ data: imageDataArray, width: imageData.width, height: imageData.height, done: false, beingProcessed: false, position: frames.length });
     };
 
     this.onRenderProgress = function(callback) {

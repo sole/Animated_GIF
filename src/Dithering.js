@@ -45,13 +45,16 @@ var Dithering = (function() {
 		return bestIndex;
 	}
 
-	// int[][] in, int[] out, int width, int height, int[][] palette
-	function BayerDithering(inPixels, outPixels, width, height, palette) {
+	// int[] inPixels, int[] outPixels, int width, int height, int[][] palette
+    // TODO: inPixels -> inComponents or inColors or something more accurate
+	function BayerDithering(inPixels, /* outPixels,*/ width, height, palette) {
 		var offset = 0;
+        var indexedOffset = 0;
 		var r, g, b;
 		var pixel, threshold, index;
 		var paletteLength = palette.length;
 		var matrix = bayerMatrix8x8;
+        var indexedPixels = new Uint8Array( width * height );
 
 		var modI = 8;
 		var modJ = 8;
@@ -63,18 +66,24 @@ var Dithering = (function() {
 				
 				threshold = matrix[i % modI][modj];
 
-				pixel = inPixels[offset];
+				/*pixel = inPixels[offset];
 
 				r = colorClamp(pixel[0] + threshold);
 				g = colorClamp(pixel[1] + threshold);
-				b = colorClamp(pixel[2] + threshold);
+				b = colorClamp(pixel[2] + threshold);*/
+
+                r = colorClamp( inPixels[offset++] + threshold );
+                g = colorClamp( inPixels[offset++] + threshold );
+                b = colorClamp( inPixels[offset++] + threshold );
 
 				index = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
-				outPixels[offset] = palette[index][3];
+				// outPixels[offset] = palette[index][3];
+                indexedPixels[indexedOffset++] = index;
 
-				offset++;
 			}
 		}
+
+        return indexedPixels;
 	}
 
 	return {

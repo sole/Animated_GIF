@@ -596,18 +596,146 @@ function NeuQuant() {
 
     return exports;
 }
+var Dithering = (function() {
+
+	function colorClamp(value) {
+		if(value < 0) return 0;
+		else if(value > 255) return 255;
+		 
+		return value;
+	}
+	
+	var bayerMatrix8x8 = [
+		[  1, 49, 13, 61,  4, 52, 16, 64 ],
+		[ 33, 17, 45, 29, 36, 20, 48, 32 ],
+		[  9, 57,  5, 53, 12, 60,  8, 56 ],
+		[ 41, 25, 37, 21, 44, 28, 40, 24 ],
+		[  3, 51, 15, 63,  2, 50, 14, 62 ],
+		[ 35, 19, 47, 31, 34, 18, 46, 30 ],
+		[ 11, 59,  7, 55, 10, 58,  6, 54 ],
+		[ 43, 27, 39, 23, 42, 26, 38, 22 ]
+	];
+	
+	// int r, int g, int b, int[][] palette, int paletteLength
+	function getClosestPaletteColorIndex(r, g, b, palette, paletteLength) {
+		var minDistance = 195076;
+		var diffR, diffG, diffB;
+		var distanceSquared;
+		var bestIndex = 0;
+		var paletteChannels;
+
+		for(var i = 0; i < paletteLength; i++) {
+
+			paletteChannels = palette[i];
+			diffR = r - paletteChannels[0];
+			diffG = g - paletteChannels[1];
+			diffB = b - paletteChannels[2];
+
+			distanceSquared = diffR*diffR + diffG*diffG + diffB*diffB;
+
+			if(distanceSquared < minDistance) {
+				bestIndex = i;
+				minDistance = distanceSquared;
+			}
+
+		}
+
+		return bestIndex;
+	}
+
+	// int[] inPixels, int[] outPixels, int width, int height, int[][] palette
+    // TODO: inPixels -> inComponents or inColors or something more accurate
+	function BayerDithering(inPixels, /* outPixels,*/ width, height, palette) {
+		var offset = 0;
+        var indexedOffset = 0;
+		var r, g, b;
+		var pixel, threshold, index;
+		var paletteLength = palette.length;
+		var matrix = bayerMatrix8x8;
+        var indexedPixels = new Uint8Array( width * height );
+
+		var modI = 8;
+		var modJ = 8;
+
+		for(var j = 0; j < height; j++) {
+			var modj = j % modJ;
+
+			for(var i = 0; i < width; i++) {
+				
+				threshold = matrix[i % modI][modj];
+
+				/*pixel = inPixels[offset];
+
+				r = colorClamp(pixel[0] + threshold);
+				g = colorClamp(pixel[1] + threshold);
+				b = colorClamp(pixel[2] + threshold);*/
+
+                r = colorClamp( inPixels[offset++] + threshold );
+                g = colorClamp( inPixels[offset++] + threshold );
+                b = colorClamp( inPixels[offset++] + threshold );
+
+				index = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
+				// outPixels[offset] = palette[index][3];
+                indexedPixels[indexedOffset++] = index;
+
+			}
+		}
+
+        return indexedPixels;
+	}
+
+	return {
+		Bayer: BayerDithering
+	};
+
+})();
+function channelizePalette( palette ) {
+    var channelizedPalette = [];
+
+    for(var i = 0; i < palette.length; i++) {
+        var color = palette[i];
+
+        var r = (color & 0xFF0000) >> 16;
+        var g = (color & 0x00FF00) >>  8;
+        var b = (color & 0x0000FF);
+
+        channelizedPalette.push([ r, g, b, color ]);
+    }
+
+    return channelizedPalette;
+
+}
+
+
+function dataToRGB( data, width, height ) {
+    var i = 0;
+    var length = width * height * 4;
+    var rgb = [];
+
+    while(i < length) {
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        i++; // for the alpha channel which we don't care about
+    }
+
+    return rgb;
+}
+
 
 function run(frame) {
     var data = frame.data;
-    var length = Object.keys(data).length;
+    var width = frame.width;
+    var height = frame.height;
+    var length = Object.keys(data).length; // !!! TODO width * height * 4?
     var numberPixels = length / 4; // 4 components = rgba
     var sampleInterval = frame.sampleInterval;
     var bgrPixels = [];
     var offset = 0;
     var r, g, b;
-    var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
+    //var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
 
-    // extract RGB values into BGR for the quantizer
+    /*// extract RGB values into BGR for the quantizer
     while(offset < length) {
         r = data[offset++];
         g = data[offset++];
@@ -641,7 +769,18 @@ function run(frame) {
         r = bgrPixels[k++];
         var index = nq.map(b, g, r);
         pixels[j] = index;
-    }
+    }*/
+
+    // Extract component values from data
+    var rgbComponents = dataToRGB( data, width, height );
+
+    // Build palette or use provided
+    var palette = [ 0xFF000000, 0xFFFFFFFF ]; // TMP
+    var paletteArray = new Uint32Array( palette );
+    var paletteChannels = channelizePalette( palette );
+
+    // Convert RGB image to indexed image
+    pixels = Dithering.Bayer(rgbComponents, width, height, paletteChannels);
 
     return ({
         pixels: pixels,

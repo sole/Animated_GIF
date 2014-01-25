@@ -1,15 +1,50 @@
+function channelizePalette( palette ) {
+    var channelizedPalette = [];
+
+    for(var i = 0; i < palette.length; i++) {
+        var color = palette[i];
+
+        var r = (color & 0xFF0000) >> 16;
+        var g = (color & 0x00FF00) >>  8;
+        var b = (color & 0x0000FF);
+
+        channelizedPalette.push([ r, g, b, color ]);
+    }
+
+    return channelizedPalette;
+
+}
+
+
+function dataToRGB( data, width, height ) {
+    var i = 0;
+    var length = width * height * 4;
+    var rgb = [];
+
+    while(i < length) {
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        i++; // for the alpha channel which we don't care about
+    }
+
+    return rgb;
+}
+
 
 function run(frame) {
     var data = frame.data;
-    var length = Object.keys(data).length;
+    var width = frame.width;
+    var height = frame.height;
+    var length = Object.keys(data).length; // !!! TODO width * height * 4?
     var numberPixels = length / 4; // 4 components = rgba
     var sampleInterval = frame.sampleInterval;
     var bgrPixels = [];
     var offset = 0;
     var r, g, b;
-    var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
+    //var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
 
-    // extract RGB values into BGR for the quantizer
+    /*// extract RGB values into BGR for the quantizer
     while(offset < length) {
         r = data[offset++];
         g = data[offset++];
@@ -43,7 +78,18 @@ function run(frame) {
         r = bgrPixels[k++];
         var index = nq.map(b, g, r);
         pixels[j] = index;
-    }
+    }*/
+
+    // Extract component values from data
+    var rgbComponents = dataToRGB( data, width, height );
+
+    // Build palette or use provided
+    var palette = [ 0xFF000000, 0xFFFFFFFF ]; // TMP
+    var paletteArray = new Uint32Array( palette );
+    var paletteChannels = channelizePalette( palette );
+
+    // Convert RGB image to indexed image
+    pixels = Dithering.Bayer(rgbComponents, width, height, paletteChannels);
 
     return ({
         pixels: pixels,
