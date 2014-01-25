@@ -23,7 +23,8 @@ browserify.bundle(function (err, src) {
 
 // Build Animated_GIF.worker.js
 var worker = readSrc('NeuQuant.js');
-worker += readSrc('quantizer.js');
+worker += readSrc('Dithering.js');
+worker += readSrc('Animated_GIF.worker.js');
 var minifiedWorker = uglify.minify(worker, { fromString: true });
 writeDist('Animated_GIF.worker.js', worker);
 writeDist('Animated_GIF.worker.min.js', minifiedWorker.code);
