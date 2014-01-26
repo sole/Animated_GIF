@@ -9,7 +9,10 @@ window.onload = function() {
         null,
         [ 0xFFFFFF, 0x000000 ],
         [ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ],
-        [ 0xFF0000, 0xFF00FF, 0xFFFFFF, 0x000000 ]
+        [ 0xFF0000, 0xFF00FF, 0xFFFFFF, 0x000000 ],
+		[ 0xFF000000, 0xFF55FF55, 0xFFFF5555, 0xFFFFFF55 ], // CGA mode 0
+        [ 0xFF0000, 0xFF00FF, 0xFFFFFF ], // Faulty palette without power of two colours
+		[ 0xFF0000 ], // Faulty with less than 2 colours
     ];
 
 	var width = srcImage.clientWidth;

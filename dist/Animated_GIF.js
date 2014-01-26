@@ -22,6 +22,45 @@ function Animated_GIF(options) {
     var workers = [], availableWorkers = [], numWorkers, workerPath;
     var generatingGIF = false;
 
+    // We'll try to be a little lenient with the palette so as to make the library easy to use
+    // The only thing we can't cope with is having a non-array so we'll bail on that one.
+    if(palette) {
+
+        if(!(palette instanceof Array)) {
+
+            throw('Palette MUST be an array but it is: ', palette);
+
+        } else {
+
+            // Now there are other two constraints that we will warn about
+            // and silently fix them... somehow:
+
+            // a) Must contain between 2 and 256 colours
+            if(palette.length < 2 || palette.length > 256) {
+                console.error('Palette must hold only between 2 and 256 colours');
+
+                while(palette.length < 2) {
+                    palette.push(0x000000);
+                }
+
+                if(palette.length > 256) {
+                    palette = palette.slice(0, 256);
+                }
+            }
+            
+            // b) Must be power of 2
+            if(!powerOfTwo(palette.length)) {
+                console.error('Palette must have a power of two number of colours');
+
+                while(!powerOfTwo(palette.length)) {
+                    palette.splice(palette.length - 1, 1);
+                }
+            }
+            
+        }
+
+    }
+
     options = options || {};
     sampleInterval = options.sampleInterval || 10;
     numWorkers = options.numWorkers || 2;
@@ -205,6 +244,12 @@ function Animated_GIF(options) {
 
         callback(buffer);
     }
+
+
+    function powerOfTwo(value) {
+        return (value !== 0) && ((value & (value - 1)) === 0);
+    }
+
 
     // ---
 

@@ -783,7 +783,7 @@ function processFrameWithDithering(imageData, width, height, ditheringType, pale
     }
 
     // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256 AT THIS POINT
-    // maybe make this outside the worker, when creating the gif ^^^
+    // maybe make this outside the worker, when creating the Animated_GIF instance
 
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );
@@ -817,90 +817,6 @@ function run(frame) {
 
 }
 
-function run2(frame) {
-    var data = frame.data;
-    var width = frame.width;
-    var height = frame.height;
-    var palette = frame.palette;
-    var dithering = frame.dithering;
-    var numberPixels = width * height;
-    var length = numberPixels * 4;
-    var sampleInterval = frame.sampleInterval;
-    var bgrPixels = [];
-    var offset = 0;
-    var r, g, b;
-    //var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
-
-    /*// extract RGB values into BGR for the quantizer
-    while(offset < length) {
-        r = data[offset++];
-        g = data[offset++];
-        b = data[offset++];
-        bgrPixels.push(b);
-        bgrPixels.push(g);
-        bgrPixels.push(r);
-
-        offset++;
-    }
-
-    var nq = new NeuQuant(bgrPixels, bgrPixels.length, sampleInterval);
-
-    // Create reduced palette first, using a quantizer
-    var paletteBGR = nq.process();
-    var palette = [];
-
-    for(var i = 0; i < paletteBGR.length; i += 3) {
-        b = paletteBGR[i];
-        g = paletteBGR[i+1];
-        r = paletteBGR[i+2];
-        palette.push(r << 16 | g << 8 | b);
-    }
-    var paletteArray = new Uint32Array(palette);
-
-    // Then map each original pixel to the closest colour in the palette
-    var k = 0;
-    for (var j = 0; j < numberPixels; j++) {
-        b = bgrPixels[k++];
-        g = bgrPixels[k++];
-        r = bgrPixels[k++];
-        var index = nq.map(b, g, r);
-        pixels[j] = index;
-    }*/
-
-    // Extract component values from data
-    var rgbComponents = dataToRGB( data, width, height );
-
-    // Build palette if none provided
-
-    if(palette === null) {
-
-        var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
-        var paletteRGB = nq.process();
-        palette = [];
-
-        for(var i = 0; i < paletteRGB.length; i += 3) {
-            r = paletteRGB[ i ];
-            g = paletteRGB[ i + 1 ];
-            b = paletteRGB[ i + 2 ];
-            palette.push(r << 16 | g << 8 | b);
-        }
-
-    }
-
-    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
-    // maybe make this outside the worker, when creating the gif ^^^
-
-    var paletteArray = new Uint32Array( palette );
-    var paletteChannels = channelizePalette( palette );
-
-    // Convert RGB image to indexed image
-    pixels = Dithering.Bayer(rgbComponents, width, height, paletteChannels);
-
-    return ({
-        pixels: pixels,
-        palette: paletteArray
-    });
-}
 
 self.onmessage = function(ev) {
     var data = ev.data;
