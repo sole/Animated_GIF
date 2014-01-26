@@ -782,9 +782,6 @@ function processFrameWithDithering(imageData, width, height, ditheringType, pale
 
     }
 
-    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256 AT THIS POINT
-    // maybe make this outside the worker, when creating the Animated_GIF instance
-
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );
 
