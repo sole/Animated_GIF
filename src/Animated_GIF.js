@@ -10,6 +10,7 @@ function Animated_GIF(options) {
 
     var width = options.width || 160;
     var height = options.height || 120;
+    var dithering = options.dithering || null;
     var palette = options.palette || null;
     var canvas = null, ctx = null, repeat = 0, delay = 250;
     var frames = [];
@@ -170,8 +171,8 @@ function Animated_GIF(options) {
         var globalPalette;
         var gifOptions = { loop: repeat };
 
-        // Using global palette
-        if(palette !== undefined) {
+        // Using global palette but only if we're also using dithering
+        if(dithering !== null && palette !== null) {
             globalPalette = palette;
             gifOptions.palette = globalPalette;
         }
@@ -242,7 +243,16 @@ function Animated_GIF(options) {
         var dataLength = imageData.length,
             imageDataArray = new Uint8Array(imageData.data);
 
-        frames.push({ data: imageDataArray, width: imageData.width, height: imageData.height, done: false, beingProcessed: false, position: frames.length, palette: palette });
+        frames.push({
+            data: imageDataArray,
+            width: imageData.width,
+            height: imageData.height,
+            palette: palette,
+            dithering: dithering,
+            done: false,
+            beingProcessed: false,
+            position: frames.length
+        });
     };
 
     this.onRenderProgress = function(callback) {

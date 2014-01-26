@@ -27,7 +27,8 @@ window.onload = function() {
 		var ag = new Animated_GIF({
 			repeat: null,
 			workerPath: 'dist/Animated_GIF.worker.js',
-            palette: palettes[i]
+            palette: palettes[i],
+			dithering: 'bayer'
 		});
 
 		lastTime = Date.now();
@@ -73,7 +74,8 @@ window.onload = function() {
 		var ag = new Animated_GIF({
 			repeat: 0,
 			workerPath: 'dist/Animated_GIF.worker.js',
-            palette: palettes[i]
+            palette: palettes[i],
+			dithering: 'bayer'
 		});
 
 		lastTime = Date.now();

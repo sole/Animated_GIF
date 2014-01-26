@@ -722,15 +722,109 @@ function dataToRGB( data, width, height ) {
     return rgb;
 }
 
+
+function componentizedPaletteToArray(paletteRGB) {
+
+    var paletteArray = [];
+
+    for(var i = 0; i < paletteRGB.length; i += 3) {
+        var r = paletteRGB[ i ];
+        var g = paletteRGB[ i + 1 ];
+        var b = paletteRGB[ i + 2 ];
+        paletteArray.push(r << 16 | g << 8 | b);
+    }
+
+    return paletteArray;
+}
+
+
+// This is the "traditional" Animated_GIF style of going from RGBA to indexed color frames
+function processFrameWithQuantizer(imageData, width, height, sampleInterval) {
+
+    var rgbComponents = dataToRGB( imageData, width, height );
+    var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
+    var paletteRGB = nq.process();
+    var paletteArray = new Uint32Array(componentizedPaletteToArray(paletteRGB));
+
+    var numberPixels = width * height;
+    var indexedPixels = new Uint8Array(numberPixels);
+
+    var k = 0;
+    for(var i = 0; i < numberPixels; i++) {
+        r = rgbComponents[k++];
+        g = rgbComponents[k++];
+        b = rgbComponents[k++];
+        indexedPixels[i] = nq.map(r, g, b);
+    }
+
+    return {
+        pixels: indexedPixels,
+        palette: paletteArray
+    };
+
+}
+
+
+// And this is a version that uses dithering against of quantizing
+// It can also use a custom palette if provided, or will build one otherwise
+function processFrameWithDithering(imageData, width, height, ditheringType, palette) {
+
+    // Extract component values from data
+    var rgbComponents = dataToRGB( imageData, width, height );
+
+
+    // Build palette if none provided
+    if(palette === null) {
+
+        var nq = new NeuQuant(rgbComponents, rgbComponents.length, 16);
+        var paletteRGB = nq.process();
+        palette = componentizedPaletteToArray(paletteRGB);
+
+    }
+
+    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256 AT THIS POINT
+    // maybe make this outside the worker, when creating the gif ^^^
+
+    var paletteArray = new Uint32Array( palette );
+    var paletteChannels = channelizePalette( palette );
+
+    // Convert RGB image to indexed image
+    pixels = Dithering.Bayer(rgbComponents, width, height, paletteChannels);
+
+    return ({
+        pixels: pixels,
+        palette: paletteArray
+    });
+
+}
+
+
 // ~~~
 
 function run(frame) {
+    var width = frame.width;
+    var height = frame.height;
+    var imageData = frame.data;
+    var dithering = frame.dithering;
+    var palette = frame.palette;
+    var sampleInterval = frame.sampleInterval;
+
+    if(dithering) {
+        return processFrameWithDithering(imageData, width, height, dithering, palette);
+    } else {
+        return processFrameWithQuantizer(imageData, width, height, sampleInterval);
+    }
+
+}
+
+function run2(frame) {
     var data = frame.data;
     var width = frame.width;
     var height = frame.height;
     var palette = frame.palette;
-    var length = Object.keys(data).length; // !!! TODO width * height * 4?
-    var numberPixels = length / 4; // 4 components = rgba
+    var dithering = frame.dithering;
+    var numberPixels = width * height;
+    var length = numberPixels * 4;
     var sampleInterval = frame.sampleInterval;
     var bgrPixels = [];
     var offset = 0;
@@ -794,6 +888,7 @@ function run(frame) {
     }
 
     // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
+    // maybe make this outside the worker, when creating the gif ^^^
 
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );

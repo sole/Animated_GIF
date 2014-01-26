@@ -31,78 +31,68 @@ function dataToRGB( data, width, height ) {
     return rgb;
 }
 
-// ~~~
 
-function run(frame) {
-    var data = frame.data;
-    var width = frame.width;
-    var height = frame.height;
-    var palette = frame.palette;
-    var length = Object.keys(data).length; // !!! TODO width * height * 4?
-    var numberPixels = length / 4; // 4 components = rgba
-    var sampleInterval = frame.sampleInterval;
-    var bgrPixels = [];
-    var offset = 0;
-    var r, g, b;
-    //var pixels = new Uint8Array(numberPixels); // it's an indexed image so 1 byte per pixel is enough
+function componentizedPaletteToArray(paletteRGB) {
 
-    /*// extract RGB values into BGR for the quantizer
-    while(offset < length) {
-        r = data[offset++];
-        g = data[offset++];
-        b = data[offset++];
-        bgrPixels.push(b);
-        bgrPixels.push(g);
-        bgrPixels.push(r);
+    var paletteArray = [];
 
-        offset++;
+    for(var i = 0; i < paletteRGB.length; i += 3) {
+        var r = paletteRGB[ i ];
+        var g = paletteRGB[ i + 1 ];
+        var b = paletteRGB[ i + 2 ];
+        paletteArray.push(r << 16 | g << 8 | b);
     }
 
-    var nq = new NeuQuant(bgrPixels, bgrPixels.length, sampleInterval);
+    return paletteArray;
+}
 
-    // Create reduced palette first, using a quantizer
-    var paletteBGR = nq.process();
-    var palette = [];
 
-    for(var i = 0; i < paletteBGR.length; i += 3) {
-        b = paletteBGR[i];
-        g = paletteBGR[i+1];
-        r = paletteBGR[i+2];
-        palette.push(r << 16 | g << 8 | b);
-    }
-    var paletteArray = new Uint32Array(palette);
+// This is the "traditional" Animated_GIF style of going from RGBA to indexed color frames
+function processFrameWithQuantizer(imageData, width, height, sampleInterval) {
 
-    // Then map each original pixel to the closest colour in the palette
+    var rgbComponents = dataToRGB( imageData, width, height );
+    var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
+    var paletteRGB = nq.process();
+    var paletteArray = new Uint32Array(componentizedPaletteToArray(paletteRGB));
+
+    var numberPixels = width * height;
+    var indexedPixels = new Uint8Array(numberPixels);
+
     var k = 0;
-    for (var j = 0; j < numberPixels; j++) {
-        b = bgrPixels[k++];
-        g = bgrPixels[k++];
-        r = bgrPixels[k++];
-        var index = nq.map(b, g, r);
-        pixels[j] = index;
-    }*/
+    for(var i = 0; i < numberPixels; i++) {
+        r = rgbComponents[k++];
+        g = rgbComponents[k++];
+        b = rgbComponents[k++];
+        indexedPixels[i] = nq.map(r, g, b);
+    }
+
+    return {
+        pixels: indexedPixels,
+        palette: paletteArray
+    };
+
+}
+
+
+// And this is a version that uses dithering against of quantizing
+// It can also use a custom palette if provided, or will build one otherwise
+function processFrameWithDithering(imageData, width, height, ditheringType, palette) {
 
     // Extract component values from data
-    var rgbComponents = dataToRGB( data, width, height );
+    var rgbComponents = dataToRGB( imageData, width, height );
+
 
     // Build palette if none provided
-
     if(palette === null) {
 
-        var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
+        var nq = new NeuQuant(rgbComponents, rgbComponents.length, 16);
         var paletteRGB = nq.process();
-        palette = [];
-
-        for(var i = 0; i < paletteRGB.length; i += 3) {
-            r = paletteRGB[ i ];
-            g = paletteRGB[ i + 1 ];
-            b = paletteRGB[ i + 2 ];
-            palette.push(r << 16 | g << 8 | b);
-        }
+        palette = componentizedPaletteToArray(paletteRGB);
 
     }
 
-    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256
+    // TODO IMPORTANT: MAKE SURE PALETTE IS A POWER OF TWO 2..256 AT THIS POINT
+    // maybe make this outside the worker, when creating the Animated_GIF instance
 
     var paletteArray = new Uint32Array( palette );
     var paletteChannels = channelizePalette( palette );
@@ -114,7 +104,28 @@ function run(frame) {
         pixels: pixels,
         palette: paletteArray
     });
+
 }
+
+
+// ~~~
+
+function run(frame) {
+    var width = frame.width;
+    var height = frame.height;
+    var imageData = frame.data;
+    var dithering = frame.dithering;
+    var palette = frame.palette;
+    var sampleInterval = frame.sampleInterval;
+
+    if(dithering) {
+        return processFrameWithDithering(imageData, width, height, dithering, palette);
+    } else {
+        return processFrameWithQuantizer(imageData, width, height, sampleInterval);
+    }
+
+}
+
 
 self.onmessage = function(ev) {
     var data = ev.data;
