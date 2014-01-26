@@ -95,7 +95,15 @@ function processFrameWithDithering(imageData, width, height, ditheringType, pale
     var paletteChannels = channelizePalette( palette );
 
     // Convert RGB image to indexed image
-    pixels = Dithering.Bayer(rgbComponents, width, height, paletteChannels);
+    var ditheringFunction;
+
+    if(ditheringType === 'closest') {
+        ditheringFunction = Dithering.Closest;
+    } else {
+        ditheringFunction = Dithering.Bayer;
+    }
+
+    pixels = ditheringFunction(rgbComponents, width, height, paletteChannels);
 
     return ({
         pixels: pixels,
