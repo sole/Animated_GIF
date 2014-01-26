@@ -2,7 +2,7 @@
 
 _A Javascript library for creating animated GIFs_
 
-**Version 0.0.1**
+**Version 0.0.2**
 
 ## How to use it?
 
@@ -50,9 +50,11 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
 
 ## Tests and examples
 
-Check the tests_* files:
+Check the `tests_*` files:
 
 * [Basic](http://sole.github.io/Animated_GIF/tests_basic.html)
+* [Custom Palettes](http://sole.github.io/Animated_GIF/tests_custom_palette.html)
+* [Dithering](http://sole.github.io/Animated_GIF/tests_dithering.html)
 * [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
 
@@ -89,3 +91,8 @@ And then, to build the `dist` files
 * node.js
 * uglify
 * browserify
+
+## Changelog
+
+* **0.0.2** - Adds support for dithering and using custom palettes.
+* **0.0.1** - first version with proper npm based build system
