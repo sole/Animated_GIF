@@ -138,6 +138,7 @@ function Animated_GIF(options) {
         }
     }
 
+
     function onFrameFinished() { // ~~~ taskFinished
 
         // The GIF is not written until we're done with all the frames
@@ -159,6 +160,7 @@ function Animated_GIF(options) {
 
     }
 
+
     // Takes the already processed data in frames and feeds it to a new
     // GifWriter instance in order to get the binary GIF file
     function generateGIF(frames, callback) {
@@ -166,14 +168,30 @@ function Animated_GIF(options) {
         // TODO: Weird: using a simple JS array instead of a typed array,
         // the files are WAY smaller o_o. Patches/explanations welcome!
         var buffer = []; // new Uint8Array(width * height * frames.length * 5);
-        var gifWriter = new GifWriter(buffer, width, height, { loop: repeat });
+        var globalPalette;
+        var gifOptions = { loop: repeat };
+
+        // Using global palette
+        if(palette !== undefined) {
+            globalPalette = palette;
+            gifOptions.palette = globalPalette;
+        }
+
+        var gifWriter = new GifWriter(buffer, width, height, gifOptions);
 
         generatingGIF = true;
 
-        frames.forEach(function(frame) {
+        frames.forEach(function(frame, index) {
+            
+            var framePalette;
+
+            if(!globalPalette) {
+               framePalette = frame.palette;
+            }
+
             onRenderProgressCallback(0.75 + 0.25 * frame.position * 1.0 / frames.length);
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
-                palette: frame.palette,
+                palette: framePalette,
                 delay: delay
             });
         });

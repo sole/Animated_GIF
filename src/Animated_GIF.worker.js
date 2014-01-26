@@ -85,7 +85,7 @@ function run(frame) {
     // Extract component values from data
     var rgbComponents = dataToRGB( data, width, height );
 
-    // Build palette or use provided
+    // Build palette if none provided
 
     if(palette === null) {
 

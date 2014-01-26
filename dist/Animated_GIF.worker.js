@@ -776,10 +776,8 @@ function run(frame) {
     // Extract component values from data
     var rgbComponents = dataToRGB( data, width, height );
 
-    // Build palette or use provided
+    // Build palette if none provided
 
-    // var palette = [ 0xFF000000, 0xFFFF0000, 0xFF00FF00, 0xFFFFFFFF ]; // TMP
-    
     if(palette === null) {
 
         var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
