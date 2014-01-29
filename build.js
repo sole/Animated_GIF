@@ -22,7 +22,7 @@ browserify.bundle(function (err, src) {
 });
 
 // Build Animated_GIF.worker.js
-var worker = readSrc('NeuQuant.js');
+var worker = readSrc('./lib/NeuQuant.js');
 worker += readSrc('Dithering.js');
 worker += readSrc('Animated_GIF.worker.js');
 var minifiedWorker = uglify.minify(worker, { fromString: true });

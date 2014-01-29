@@ -7,7 +7,7 @@
 function Animated_GIF(options) {
     'use strict';
 
-    var GifWriter = require('./omggif').GifWriter;
+    var GifWriter = require('./lib/omggif').GifWriter;
 
     var width = options.width || 160;
     var height = options.height || 120;
@@ -338,22 +338,7 @@ function Animated_GIF(options) {
 // into dist/Animated_GIF.js using a build step with browserify
 module.exports = Animated_GIF;
 
-},{"./omggif":3}],2:[function(require,module,exports){
-(function() {
-
-    var Animated_GIF = require('./Animated_GIF');
-
-    // Supposedly should make the bundle compatible with require.js
-    if(typeof define === 'function' && define.amd) {
-        define(function() { return Animated_GIF; });
-    } else {
-        // Otherwise just tuck it into the window object
-        window.Animated_GIF = Animated_GIF;
-    }
-
-}).call(this);
-
-},{"./Animated_GIF":1}],3:[function(require,module,exports){
+},{"./lib/omggif":2}],2:[function(require,module,exports){
 // (c) Dean McNamee <dean@gmail.com>, 2013.
 //
 // https://github.com/deanm/omggif
@@ -1085,4 +1070,19 @@ function GifReaderLZWOutputIndexStream(code_stream, p, output, output_length) {
 try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) { }  // CommonJS.
 
 
-},{}]},{},[2])
+},{}],3:[function(require,module,exports){
+(function() {
+
+    var Animated_GIF = require('./Animated_GIF');
+
+    // Supposedly should make the bundle compatible with require.js
+    if(typeof define === 'function' && define.amd) {
+        define(function() { return Animated_GIF; });
+    } else {
+        // Otherwise just tuck it into the window object
+        window.Animated_GIF = Animated_GIF;
+    }
+
+}).call(this);
+
+},{"./Animated_GIF":1}]},{},[3])

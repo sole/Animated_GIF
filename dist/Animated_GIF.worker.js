@@ -710,7 +710,6 @@ var Dithering = (function() {
         var offset = 0;
         var indexedOffset = 0;
         var r, g, b;
-        //var pixel, threshold, index;
         var widthLimit = width - 1;
         var heightLimit = height - 1;
         var offsetNextI, offsetNextJ;
@@ -739,21 +738,26 @@ var Dithering = (function() {
                 var errorB = b - paletteColor[2];
 
                 if(i < widthLimit) {
+
                     offsetNextI = offset + 1;
                    
                     inPixels[offsetNextI++] += (errorR * 7) >> 4;
                     inPixels[offsetNextI++] += (errorG * 7) >> 4;
                     inPixels[offsetNextI++] += (errorB * 7) >> 4;
+
                 }
+
 
                 if(j < heightLimit) {
 
                     if(i > 0) {
+                    
                         offsetPrevINextJ = offset - 1 + width;
 
                         inPixels[offsetPrevINextJ++] += (errorR * 3) >> 4;
                         inPixels[offsetPrevINextJ++] += (errorG * 3) >> 4;
                         inPixels[offsetPrevINextJ++] += (errorB * 3) >> 4;
+                    
                     }
 
                     offsetNextJ = offset + width;
@@ -762,12 +766,15 @@ var Dithering = (function() {
                     inPixels[offsetNextJ++] += (errorG * 5) >> 4;
                     inPixels[offsetNextJ++] += (errorB * 5) >> 4;
 
+
                     if(i < widthLimit) {
 
                         inPixels[offsetNextJ++] += errorR >> 4;
                         inPixels[offsetNextJ++] += errorG >> 4;
                         inPixels[offsetNextJ++] += errorB >> 4;
+                
                     }
+                
                 }
 
                 indexedOffset++;
