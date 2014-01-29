@@ -645,7 +645,6 @@ var Dithering = (function() {
         return bestIndex;
     }
 
-    // int[] inPixels, int[] outPixels, int width, int height, int[][] palette
     // TODO: inPixels -> inComponents or inColors or something more accurate
     function BayerDithering(inPixels, width, height, palette) {
         var offset = 0;
@@ -705,9 +704,83 @@ var Dithering = (function() {
 
     }
 
+
+    function FloydSteinberg(inPixels, width, height, palette) {
+        var paletteLength = palette.length;
+        var offset = 0;
+        var indexedOffset = 0;
+        var r, g, b;
+        //var pixel, threshold, index;
+        var widthLimit = width - 1;
+        var heightLimit = height - 1;
+        var offsetNextI, offsetNextJ;
+        var offsetPrevINextJ;
+        var channels, nextChannels;
+        var indexedPixels = new Uint8Array( width * height );
+
+        for(var j = 0; j < height; j++) {
+            for(var i = 0; i < width; i++) {
+
+                r = colorClamp(inPixels[offset++]);
+                g = colorClamp(inPixels[offset++]);
+                b = colorClamp(inPixels[offset++]);
+
+                var colorIndex = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
+                var paletteColor = palette[colorIndex];
+                var closestColor = paletteColor[3];
+
+                // We are done with finding the best value for this pixel
+                indexedPixels[indexedOffset] = colorIndex;
+
+                // Now find difference between assigned value and original color
+                // and propagate that error forward
+                var errorR = r - paletteColor[0];
+                var errorG = g - paletteColor[1];
+                var errorB = b - paletteColor[2];
+
+                if(i < widthLimit) {
+                    offsetNextI = offset + 1;
+                   
+                    inPixels[offsetNextI++] += (errorR * 7) >> 4;
+                    inPixels[offsetNextI++] += (errorG * 7) >> 4;
+                    inPixels[offsetNextI++] += (errorB * 7) >> 4;
+                }
+
+                if(j < heightLimit) {
+
+                    if(i > 0) {
+                        offsetPrevINextJ = offset - 1 + width;
+
+                        inPixels[offsetPrevINextJ++] += (errorR * 3) >> 4;
+                        inPixels[offsetPrevINextJ++] += (errorG * 3) >> 4;
+                        inPixels[offsetPrevINextJ++] += (errorB * 3) >> 4;
+                    }
+
+                    offsetNextJ = offset + width;
+
+                    inPixels[offsetNextJ++] += (errorR * 5) >> 4;
+                    inPixels[offsetNextJ++] += (errorG * 5) >> 4;
+                    inPixels[offsetNextJ++] += (errorB * 5) >> 4;
+
+                    if(i < widthLimit) {
+
+                        inPixels[offsetNextJ++] += errorR >> 4;
+                        inPixels[offsetNextJ++] += errorG >> 4;
+                        inPixels[offsetNextJ++] += errorB >> 4;
+                    }
+                }
+
+                indexedOffset++;
+            }
+        }
+
+        return indexedPixels;
+    }
+
     return {
         Bayer: BayerDithering,
-        Closest: ClosestDithering
+        Closest: ClosestDithering,
+        FloydSteinberg: FloydSteinberg
     };
 
 })();
@@ -812,6 +885,8 @@ function processFrameWithDithering(imageData, width, height, ditheringType, pale
 
     if(ditheringType === 'closest') {
         ditheringFunction = Dithering.Closest;
+    } else if(ditheringType === 'floyd') {
+        ditheringFunction = Dithering.FloydSteinberg;
     } else {
         ditheringFunction = Dithering.Bayer;
     }

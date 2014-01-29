@@ -99,6 +99,8 @@ function processFrameWithDithering(imageData, width, height, ditheringType, pale
 
     if(ditheringType === 'closest') {
         ditheringFunction = Dithering.Closest;
+    } else if(ditheringType === 'floyd') {
+        ditheringFunction = Dithering.FloydSteinberg;
     } else {
         ditheringFunction = Dithering.Bayer;
     }

@@ -44,7 +44,8 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
 - `workerPath`: path to the `Animated_GIF.worker.js` file (or `Animated_GIF.worker.min.js`). Default is `dist/Animated_GIF.worker.js`, change accordingly if you place the files somewhere else than `dist`.
 - `useQuantizer`: this is `true` by default, and provides the highest quality results, at the cost of slower processing and bigger files. When this is enabled, a neural network quantizer will be used to find the best palette for each frame. No dithering is available in this case, as the colours are chosen with the quantizer too.
 - `dithering`: selects how to best spread the error in colour mapping, to *conceal* the fact that we're using a palette and not true color. Note that using this option automatically disables the aforementioned quantizer. Best results if you pass in a palette, but if not we'll create one using the colours in the first frame. Possible options:
-    - `bayer`: creates a somewhat nice and retro x hatched pattern
+    - `bayer`: creates a somewhat nice and retro 'x' hatched pattern
+    - `floyd`: creates another somewhat retro look where error is spread, using the Floyd-Steinberg algorithm
     - `closest`: actually no dithering, just picks the closest colour from the palette per each pixel
 - `palette`: An array of integers containing a palette. E.g. `[ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ]` contains red, green, blue and black. The length of a palette must be a power of 2, and contain between 2 and 256 colours.
 
