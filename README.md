@@ -2,7 +2,7 @@
 
 _A Javascript library for creating animated GIFs_
 
-**Version 0.0.2**
+**Version 0.0.3**
 
 ## How to use it?
 
@@ -59,9 +59,30 @@ Check the `tests_*` files:
 * [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
 
-## Rebuild `dist` files
+## See it in action
 
-If you made changes in the library and need to rebuild the files in `dist/`, you need to use our [node.js](http://nodejs.org/)-based script to regenerate those files.
+Some sites and apps using it:
+
+* [chat.meatspac.es](http://chat.meatspac.es)
+* [rtcamera](http://rtcamera.apps.5013.es/)
+
+## Hacking / contributing / walkthrough
+
+Here's a quick walkthrough of each of the files in `src/` and what they do:
+
+* `Animated_GIF.js` - definition of the `Animated_GIF` class. Holds the logic for the queueing and rendering of the files, and parsing config options.
+* `Animated_GIF.worker.js` - code for the web worker that color-indexes frames in the background, using `Dithering.js` and `NeuQuant.js`
+* `Dithering.js` - class with three different types of Dithering algorithms
+* `main.js` - stub in order to export the library using Browserify (you won't generally need to touch this one)
+
+External / included libraries --see *Credits* for more information on these. You generally don't want to touch these because it will make very difficult to track updates in those libraries:
+
+* `lib/NeuQuant.js` - color quantizer based on a neural network algorithm, this is an external library
+* `lib/omggif.js` - GIF89 encoder/decoder
+
+### Rebuild `dist` files
+
+If you made changes in the library, you'll need to rebuild the files in `dist/` in order to see the changes working. We have a [node.js](http://nodejs.org/)-based script to regenerate those files.
 
 Once node.js is installed in your system, do:
 
@@ -73,12 +94,6 @@ npm run build       # and this actually builds
 
 Once you do the initial two steps you just need to execute `npm run build` whenever you change things and want to rebuild the files in `dist/`.
 
-## See it in action
-
-Some sites and apps using it:
-
-* [chat.meatspac.es](http://chat.meatspac.es)
-* [rtcamera](http://rtcamera.apps.5013.es/)
 
 ## Credits
 
