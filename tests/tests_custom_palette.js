@@ -17,8 +17,10 @@ window.onload = function() {
 
 	var width = srcImage.clientWidth;
 	var height = srcImage.clientHeight;
+    var workerPath = '../dist/Animated_GIF.worker.js';
 	var lastTime = 0;
 	
+
     // We'll start by generating static one frame versions of the first image
     // using different palettes
     // Then when that's done we'll build 3 frame gifs with different palettes
@@ -29,7 +31,7 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: null,
-			workerPath: 'dist/Animated_GIF.worker.js',
+			workerPath: workerPath,
             palette: palettes[i],
 			dithering: 'bayer'
 		});
@@ -76,7 +78,7 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: 0,
-			workerPath: 'dist/Animated_GIF.worker.js',
+			workerPath: workerPath,
             palette: palettes[i],
 			dithering: 'bayer'
 		});

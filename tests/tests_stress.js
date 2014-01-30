@@ -57,7 +57,7 @@ window.onload = function() {
 
 
         // Make a one-frame GIF
-        var ag = new Animated_GIF({ repeat: null, workerPath: 'dist/Animated_GIF.worker.js' });
+        var ag = new Animated_GIF({ repeat: null, workerPath: '../dist/Animated_GIF.worker.js' });
         ag.setSize(width, height);
         ag.addFrame(canvasAnimation);
         ag.getBase64GIF(function(gif) {

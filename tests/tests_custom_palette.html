@@ -2,26 +2,33 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Animated_GIF - basic test</title>
+        <title>Animated_GIF - palette test</title>
     </head>
     <body>
         <h1>Animated_GIF</h1>
         <p>A library that makes creating animated GIFs easy. Everything is client-side, using JavaScript.</p>
         <p><a href="https://github.com/sole/Animated_GIF/">Get the source</a> and start animating today!</p>
-        <p>This example tests the effect of the <tt>sampleInterval</tt> option. Bigger values are faster, but palettes are less accurate.</p>
+        <p>This example tests the effect of the <tt>palette</tt> option.</p>
 
         <p id="status">Please wait... doin' fancy stuff</p>
 
         <h2>Original image</h2>
 
-        <img src="images/2687824939_6e3690d51d_z.jpg" alt="parakeets" />
+        <img src="../images/2687824939_6e3690d51d_z.jpg" alt="parakeets" />
         <p>Picture by <a href="http://www.flickr.com/photos/petehogan/2687824939/">petehogan</a></p>
+
+        <img src="../images/4878878197_31de9837ba_z.jpg" alt="sad kitten" />
+        <p>Picture by <a href="http://www.flickr.com/photos/bjornlifoto/4878878197/">bjornlifoto</a></p>
+
+        <img src="../images/5663357414_001d1ce705_z.jpg" alt="terrapin" />
+        <p>Picture by <a href="http://www.flickr.com/photos/tomsoperphotography/5663357414/">tom soper</a></p>
+
         
         <div id="output_images"></div>
 
-        <script src="dist/Animated_GIF.js"></script>
+        <script src="../dist/Animated_GIF.js"></script>
 
-        <script src="tests_sample_interval.js"></script>
+        <script src="tests_custom_palette.js"></script>
         <style>
             #status {
                 font-family: Courier, mono;

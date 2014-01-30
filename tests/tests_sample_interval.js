@@ -19,7 +19,7 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: null,
-			workerPath: 'dist/Animated_GIF.worker.js',
+			workerPath: '../dist/Animated_GIF.worker.js',
 			sampleInterval: sampleInterval
 		});
 

@@ -6,6 +6,7 @@ window.onload = function() {
     var imageHeight = firstImage.clientHeight;
     var tasks = [];
     var status = document.getElementById('status');
+    var workerPath = '../dist/Animated_GIF.worker.js';
 
 
     function buildImageCallback(img) {
@@ -17,7 +18,10 @@ window.onload = function() {
 
     function getBuildGIFTask(img) {
         return function(doneCallback) {
-            var ag = new Animated_GIF({ repeat: null, workerPath: 'dist/Animated_GIF.worker.js' }); // Don't repeat
+            var ag = new Animated_GIF({
+                repeat: null, // Don't repeat
+                workerPath: workerPath
+            });
             ag.setSize(img.clientWidth, img.clientHeight);
             ag.addFrame(img);
 
@@ -73,7 +77,10 @@ window.onload = function() {
 
     tasks.push(function(doneCallback) {
 
-        var agAll = new Animated_GIF({ repeat: 0, workerPath: 'dist/Animated_GIF.worker.js' }); // repeat 0 = Repeat forever
+        var agAll = new Animated_GIF({
+            repeat: 0, // repeat 0 = Repeat forever
+            workerPath: workerPath
+        });
         agAll.setSize(imageWidth, imageHeight);
         agAll.setDelay(1000);
 
