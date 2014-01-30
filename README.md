@@ -29,7 +29,7 @@ ag.getBase64GIF(function(image) {
 
 ```
 
-If you instance lots of `Animated_GIF` objects, it's strongly recommended that you call their `destroy` method once you're done rendering the GIFs, as browsers don't seem to be happy otherwise. See the [stress test](tests_stress.html) for an example of this in use!
+If you instance lots of `Animated_GIF` objects, it's strongly recommended that you call their `destroy` method once you're done rendering the GIFs, as browsers don't seem to be happy otherwise. See the [stress test](tests/stress.html) for an example of this in use!
 
 ## Minified versions
 
@@ -51,13 +51,23 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
 
 ## Tests and examples
 
-Check the `tests_*` files:
+Check the files in the `tests` folder:
 
-* [Basic](http://sole.github.io/Animated_GIF/tests_basic.html)
-* [Custom Palettes](http://sole.github.io/Animated_GIF/tests_custom_palette.html)
-* [Dithering](http://sole.github.io/Animated_GIF/tests_dithering.html)
-* [Stress](http://sole.github.io/Animated_GIF/tests_stress.html)
-* [Sample Interval](http://sole.github.io/Animated_GIF/tests_sample_interval.html)
+* [Basic](http://sole.github.io/Animated_GIF/tests/basic.html)
+* [Custom Palettes](http://sole.github.io/Animated_GIF/tests/custom_palette.html)
+* [Dithering](http://sole.github.io/Animated_GIF/tests/dithering.html)
+* [Stress](http://sole.github.io/Animated_GIF/tests/stress.html)
+* [Sample Interval](http://sole.github.io/Animated_GIF/tests/sample_interval.html)
+
+If you want to access the examples locally you'll have to run a local web server because of security restrictions when loading the web worker.
+
+Just fire up the server from the root folder (e.g. `Animated_GIF`) and access the files using relative paths. One way of doing it is using the simple Python web server:
+
+````bash
+python -m SimpleHTTPServer
+````
+
+starts a server in `http://localhost:8000`. So you can now go to `http://localhost:8000/tests/` and see the available examples.
 
 ## See it in action
 
