@@ -4,16 +4,18 @@ window.onload = function() {
 	var output = document.getElementById('output_images');
 	var statusDiv = document.getElementById('status');
 
-	var i = 0;
-    var palettes = [
-        null,
-        [ 0xFFFFFF, 0x000000 ],
-        [ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ],
-        [ 0xFF0000, 0xFF00FF, 0xFFFFFF, 0x000000 ],
-		[ 0xFF000000, 0xFF55FF55, 0xFFFF5555, 0xFFFFFF55 ], // CGA mode 0
-        [ 0xFF0000, 0xFF00FF, 0xFFFFFF ], // Faulty palette without power of two colours
-		[ 0xFF0000 ], // Faulty with less than 2 colours
-    ];
+  var i = 0;
+  var palettes = [
+    null,
+    [ 0xFFFFFF, 0x000000 ],
+    [ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ],
+    [ 0xFF0000, 0xFF00FF, 0xFFFFFF, 0x000000 ],
+    [ 0xFF000000, 0xFF55FF55, 0xFFFF5555, 0xFFFFFF55 ], // CGA mode 0
+    [ 0xFF000000, 0xFF55FFFF, 0xFFFF55FF, 0xFFFFFFFF ], // CGA mode 1
+    [ 0xFF000000, 0xFF0000AA, 0xFF00AA00, 0xFF00AAAA, 0xFFAA0000, 0xFFAA00AA, 0xFFAA5500, 0xFFAAAAAA, 0xFF555555, 0xFF5555FF, 0xFF55FF55, 0xFF55FFFF, 0xFFFF5555, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF ], // EGA
+    [ 0xFF0000, 0xFF00FF, 0xFFFFFF ], // Faulty palette without power of two colours
+    [ 0xFF0000 ], // Faulty with less than 2 colours
+  ];
 
 	var width = srcImage.clientWidth;
 	var height = srcImage.clientHeight;
