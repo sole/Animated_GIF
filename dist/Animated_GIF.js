@@ -321,6 +321,20 @@ function Animated_GIF(options) {
 
     };
 
+
+    this.getBlobGIF = function(completeCallback) {
+
+        var onRenderComplete = function(buffer) {
+            var array = new Uint8Array(buffer);
+            var blob = new Blob([ array ], { type: 'image/gif' });
+            completeCallback(blob);
+        };
+
+        startRendering(onRenderComplete);
+
+    };
+
+
     // Once this function is called, the object becomes unusable
     // and you'll need to create a new one.
     this.destroy = function() {

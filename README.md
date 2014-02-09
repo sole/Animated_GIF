@@ -54,6 +54,7 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
 Check the files in the `tests` folder:
 
 * [Basic](http://sole.github.io/Animated_GIF/tests/basic.html)
+* [Basic, but using Blobs](http://sole.github.io/Animated_GIF/tests/basic-blob.html)
 * [Custom Palettes](http://sole.github.io/Animated_GIF/tests/custom_palette.html)
 * [Dithering](http://sole.github.io/Animated_GIF/tests/dithering.html)
 * [Stress](http://sole.github.io/Animated_GIF/tests/stress.html)
