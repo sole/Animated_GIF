@@ -1,5 +1,5 @@
 {
-  "name": "Animated_GIF",
+  "name": "animated_gif",
   "version": "0.0.3",
   "description": "Javascript library for creating animated GIFs",
   "main": "index.js",
