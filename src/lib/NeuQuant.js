@@ -1,14 +1,14 @@
 /*
 * NeuQuant Neural-Net Quantization Algorithm
 * ------------------------------------------
-* 
+*
 * Copyright (c) 1994 Anthony Dekker
-* 
+*
 * NEUQUANT Neural-Net quantization algorithm by Anthony Dekker, 1994. See
 * "Kohonen neural networks for optimal colour quantization" in "Network:
 * Computation in Neural Systems" Vol. 5 (1994) pp 351-367. for a discussion of
 * the algorithm.
-* 
+*
 * Any party obtaining a copy of these files from the author, directly or
 * indirectly, is granted, free of charge, a full and unrestricted irrevocable,
 * world-wide, paid up, royalty-free, nonexclusive right and license to deal in
@@ -18,7 +18,7 @@
 * receive copies from any such party to do so, with the only requirement being
 * that this copyright notice remain intact.
 */
- 
+
 /*
 * This class handles Neural-Net quantization algorithm
 * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
@@ -29,7 +29,7 @@
 * Also implement fix in color conversion described at http://stackoverflow.com/questions/16371712/neuquant-js-javascript-color-quantization-hidden-bug-in-js-conversion
 */
 
-function NeuQuant() {
+module.exports = function NeuQuant() {
 
     var netsize = 256; // number of colours used
 
@@ -79,7 +79,7 @@ function NeuQuant() {
     var alpharadbshift = (alphabiasshift + radbiasshift);
     var alpharadbias = (1 << alpharadbshift);
 
-    
+
     // Input image
     var thepicture;
     // Height * Width * 3
@@ -148,7 +148,7 @@ function NeuQuant() {
 
         previouscol = 0;
         startpos = 0;
-        
+
         for (i = 0; i < netsize; i++)
         {
 
@@ -157,7 +157,7 @@ function NeuQuant() {
             smallval = p[1]; // index on g
             // find smallest in i..netsize-1
             for (j = i + 1; j < netsize; j++) {
-                
+
                 q = network[j];
 
                 if (q[1] < smallval) { // index on g
@@ -167,7 +167,7 @@ function NeuQuant() {
             }
 
             q = network[smallpos];
-            
+
             // swap p (i) and q (smallpos) entries
             if (i != smallpos) {
                 j = q[0];
@@ -207,7 +207,7 @@ function NeuQuant() {
 
     }
 
-    
+
     // Main Learning Loop
 
     function learn() {
@@ -437,7 +437,7 @@ function NeuQuant() {
             network[i][3] = i; // record colour no
         }
     }
-    
+
     // Move adjacent neurons by precomputed alpha*(1-((i-j)^2/[r]^2))
     // in radpower[|i-j|]
     function alterneigh(rad, i, b, g, r) {
@@ -502,7 +502,7 @@ function NeuQuant() {
 
     }
 
-    
+
     // Move neuron i towards biased (b,g,r) by factor alpha
     function altersingle(alpha, i, b, g, r) {
 

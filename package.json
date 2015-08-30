@@ -22,5 +22,9 @@
   "devDependencies": {
     "browserify": "~3.20.0",
     "uglify-js": "~2.4.10"
+  },
+  "dependencies": {
+    "node-dithering": "0.0.1",
+    "omggif": "^1.0.8"
   }
 }
