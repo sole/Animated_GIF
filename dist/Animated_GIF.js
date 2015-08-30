@@ -1,358 +1,4 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// A library/utility for generating GIF files
-// Uses Dean McNamee's omggif library
-// and Anthony Dekker's NeuQuant quantizer (JS 0.3 version with many fixes)
-//
-// @author sole / http://soledadpenades.com
-function Animated_GIF(options) {
-    'use strict';
-
-    var GifWriter = require('./lib/omggif').GifWriter;
-
-    var width = options.width || 160;
-    var height = options.height || 120;
-    var dithering = options.dithering || null;
-    var palette = options.palette || null;
-    var canvas = null, ctx = null, repeat = 0, delay = 250;
-    var frames = [];
-    var numRenderedFrames = 0;
-    var onRenderCompleteCallback = function() {};
-    var onRenderProgressCallback = function() {};
-    var sampleInterval;
-    var workers = [], availableWorkers = [], numWorkers, workerPath;
-    var generatingGIF = false;
-
-    // We'll try to be a little lenient with the palette so as to make the library easy to use
-    // The only thing we can't cope with is having a non-array so we'll bail on that one.
-    if(palette) {
-
-        if(!(palette instanceof Array)) {
-
-            throw('Palette MUST be an array but it is: ', palette);
-
-        } else {
-
-            // Now there are other two constraints that we will warn about
-            // and silently fix them... somehow:
-
-            // a) Must contain between 2 and 256 colours
-            if(palette.length < 2 || palette.length > 256) {
-                console.error('Palette must hold only between 2 and 256 colours');
-
-                while(palette.length < 2) {
-                    palette.push(0x000000);
-                }
-
-                if(palette.length > 256) {
-                    palette = palette.slice(0, 256);
-                }
-            }
-            
-            // b) Must be power of 2
-            if(!powerOfTwo(palette.length)) {
-                console.error('Palette must have a power of two number of colours');
-
-                while(!powerOfTwo(palette.length)) {
-                    palette.splice(palette.length - 1, 1);
-                }
-            }
-            
-        }
-
-    }
-
-    options = options || {};
-    sampleInterval = options.sampleInterval || 10;
-    numWorkers = options.numWorkers || 2;
-    workerPath = options.workerPath || 'Animated_GIF.worker.js'; // TODO possible to find our path?
-
-    for(var i = 0; i < numWorkers; i++) {
-        var w = new Worker(workerPath);
-        workers.push(w);
-        availableWorkers.push(w);
-    }
-
-    // ---
-
-    // Return a worker for processing a frame
-    function getWorker() {
-        if(availableWorkers.length === 0) {
-            throw ('No workers left!');
-        }
-
-        return availableWorkers.pop();
-    }
-
-    // Restore a worker to the pool
-    function freeWorker(worker) {
-        availableWorkers.push(worker);
-    }
-
-    // Faster/closurized bufferToString function
-    // (caching the String.fromCharCode values)
-    var bufferToString = (function() {
-        var byteMap = [];
-        for(var i = 0; i < 256; i++) {
-            byteMap[i] = String.fromCharCode(i);
-        }
-
-        return (function(buffer) {
-            var numberValues = buffer.length;
-            var str = '';
-
-            for(var i = 0; i < numberValues; i++) {
-                str += byteMap[ buffer[i] ];
-            }
-
-            return str;
-        });
-    })();
-
-    function startRendering(completeCallback) {
-        var numFrames = frames.length;
-
-        onRenderCompleteCallback = completeCallback;
-
-        for(var i = 0; i < numWorkers && i < frames.length; i++) {
-            processFrame(i);
-        }
-    }
-
-    function processFrame(position) {
-        var frame;
-        var worker;
-
-        frame = frames[position];
-
-        if(frame.beingProcessed || frame.done) {
-            console.error('Frame already being processed or done!', frame.position);
-            onFrameFinished();
-            return;
-        }
-
-        frame.sampleInterval = sampleInterval;
-        frame.beingProcessed = true;
-
-        worker = getWorker();
-
-        worker.onmessage = function(ev) {
-            var data = ev.data;
-
-            // Delete original data, and free memory
-            delete(frame.data);
-
-            // TODO grrr... HACK for object -> Array
-            frame.pixels = Array.prototype.slice.call(data.pixels);
-            frame.palette = Array.prototype.slice.call(data.palette);
-            frame.done = true;
-            frame.beingProcessed = false;
-
-            freeWorker(worker);
-
-            onFrameFinished();
-        };
-
-
-        // TODO transfer objects should be more efficient
-        /*var frameData = frame.data;
-        //worker.postMessage(frameData, [frameData]);
-        worker.postMessage(frameData);*/
-
-        worker.postMessage(frame);
-    }
-
-    function processNextFrame() {
-
-        var position = -1;
-
-        for(var i = 0; i < frames.length; i++) {
-            var frame = frames[i];
-            if(!frame.done && !frame.beingProcessed) {
-                position = i;
-                break;
-            }
-        }
-
-        if(position >= 0) {
-            processFrame(position);
-        }
-    }
-
-
-    function onFrameFinished() { // ~~~ taskFinished
-
-        // The GIF is not written until we're done with all the frames
-        // because they might not be processed in the same order
-        var allDone = frames.every(function(frame) {
-            return !frame.beingProcessed && frame.done;
-        });
-
-        numRenderedFrames++;
-        onRenderProgressCallback(numRenderedFrames * 0.75 / frames.length);
-
-        if(allDone) {
-            if(!generatingGIF) {
-                generateGIF(frames, onRenderCompleteCallback);
-            }
-        } else {
-            setTimeout(processNextFrame, 1);
-        }
-
-    }
-
-
-    // Takes the already processed data in frames and feeds it to a new
-    // GifWriter instance in order to get the binary GIF file
-    function generateGIF(frames, callback) {
-
-        // TODO: Weird: using a simple JS array instead of a typed array,
-        // the files are WAY smaller o_o. Patches/explanations welcome!
-        var buffer = []; // new Uint8Array(width * height * frames.length * 5);
-        var globalPalette;
-        var gifOptions = { loop: repeat };
-
-        // Using global palette but only if we're also using dithering
-        if(dithering !== null && palette !== null) {
-            globalPalette = palette;
-            gifOptions.palette = globalPalette;
-        }
-
-        var gifWriter = new GifWriter(buffer, width, height, gifOptions);
-
-        generatingGIF = true;
-
-        frames.forEach(function(frame, index) {
-            
-            var framePalette;
-
-            if(!globalPalette) {
-               framePalette = frame.palette;
-            }
-
-            onRenderProgressCallback(0.75 + 0.25 * frame.position * 1.0 / frames.length);
-            gifWriter.addFrame(0, 0, width, height, frame.pixels, {
-                palette: framePalette,
-                delay: delay
-            });
-        });
-
-        gifWriter.end();
-        onRenderProgressCallback(1.0);
-
-        frames = [];
-        generatingGIF = false;
-
-        callback(buffer);
-    }
-
-
-    function powerOfTwo(value) {
-        return (value !== 0) && ((value & (value - 1)) === 0);
-    }
-
-
-    // ---
-
-    this.setSize = function(w, h) {
-        width = w;
-        height = h;
-        canvas = document.createElement('canvas');
-        canvas.width = w;
-        canvas.height = h;
-        ctx = canvas.getContext('2d');
-    };
-
-    // Internally, GIF uses tenths of seconds to store the delay
-    this.setDelay = function(seconds) {
-        delay = seconds * 0.1;
-    };
-
-    // From GIF: 0 = loop forever, null = not looping, n > 0 = loop n times and stop
-    this.setRepeat = function(r) {
-        repeat = r;
-    };
-
-    this.addFrame = function(element) {
-
-        if(ctx === null) {
-            this.setSize(width, height);
-        }
-
-        ctx.drawImage(element, 0, 0, width, height);
-        var imageData = ctx.getImageData(0, 0, width, height);
-
-        this.addFrameImageData(imageData);
-    };
-
-    this.addFrameImageData = function(imageData) {
-
-        var dataLength = imageData.length,
-            imageDataArray = new Uint8Array(imageData.data);
-
-        frames.push({
-            data: imageDataArray,
-            width: imageData.width,
-            height: imageData.height,
-            palette: palette,
-            dithering: dithering,
-            done: false,
-            beingProcessed: false,
-            position: frames.length
-        });
-    };
-
-    this.onRenderProgress = function(callback) {
-        onRenderProgressCallback = callback;
-    };
-
-    this.isRendering = function() {
-        return generatingGIF;
-    };
-
-    this.getBase64GIF = function(completeCallback) {
-
-        var onRenderComplete = function(buffer) {
-            var str = bufferToString(buffer);
-            var gif = 'data:image/gif;base64,' + btoa(str);
-            completeCallback(gif);
-        };
-
-        startRendering(onRenderComplete);
-
-    };
-
-
-    this.getBlobGIF = function(completeCallback) {
-
-        var onRenderComplete = function(buffer) {
-            var array = new Uint8Array(buffer);
-            var blob = new Blob([ array ], { type: 'image/gif' });
-            completeCallback(blob);
-        };
-
-        startRendering(onRenderComplete);
-
-    };
-
-
-    // Once this function is called, the object becomes unusable
-    // and you'll need to create a new one.
-    this.destroy = function() {
-
-        // Explicitly ask web workers to die so they are explicitly GC'ed
-        workers.forEach(function(w) {
-            w.terminate();
-        });
-
-    };
-
-}
-
-// Not using the full blown exporter because this is supposed to be built
-// into dist/Animated_GIF.js using a build step with browserify
-module.exports = Animated_GIF;
-
-},{"./lib/omggif":2}],2:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.AnimatedGIF=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 // (c) Dean McNamee <dean@gmail.com>, 2013.
 //
 // https://github.com/deanm/omggif
@@ -375,9 +21,9 @@ module.exports = Animated_GIF;
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
 // IN THE SOFTWARE.
 //
-// omggif is a JavaScript implementation of a GIF 89a encoder, including
-// animation and compression.  It does not rely on any specific underlying
-// system, so should run in the browser, Node, or Plask.
+// omggif is a JavaScript implementation of a GIF 89a encoder and decoder,
+// including animation and compression.  It does not rely on any specific
+// underlying system, so should run in the browser, Node, or Plask.
 
 function GifWriter(buf, width, height, gopts) {
   var p = 0;
@@ -709,10 +355,10 @@ function GifWriterOutputLZWCodeStream(buf, p, min_code_size, index_stream) {
 function GifReader(buf) {
   var p = 0;
 
-  // - Header.
-  if (buf[p++] !== 0x47 || buf[p++] !== 0x49 || buf[p++] !== 0x46 ||  // GIF
-      buf[p++] !== 0x38 || buf[p++] !== 0x39 || buf[p++] !== 0x61) {  // 89a
-    throw "Invalid GIF 89a header.";
+  // - Header (GIF87a or GIF89a).
+  if (buf[p++] !== 0x47 ||            buf[p++] !== 0x49 || buf[p++] !== 0x46 ||
+      buf[p++] !== 0x38 || (buf[p++]+1 & 0xfd) !== 0x38 || buf[p++] !== 0x61) {
+    throw "Invalid GIF 87a/89a header.";
   }
 
   // - Logical Screen Descriptor.
@@ -731,8 +377,6 @@ function GifReader(buf) {
     global_palette_offset = p;
     p += num_global_colors * 3;  // Seek past palette.
   }
-
-  var loop_count = null;
 
   var no_eof = true;
 
@@ -805,6 +449,7 @@ function GifReader(buf) {
         var h = buf[p++] | buf[p++] << 8;
         var pf2 = buf[p++];
         var local_palette_flag = pf2 >> 7;
+        var interlace_flag = pf2 >> 6 & 1;
         var num_local_colors_pow2 = pf2 & 0x7;
         var num_local_colors = 1 << (num_local_colors_pow2 + 1);
         var palette_offset = global_palette_offset;
@@ -830,6 +475,7 @@ function GifReader(buf) {
                      data_offset: data_offset,
                      data_length: p - data_offset,
                      transparent_index: transparent_index,
+                     interlaced: !!interlace_flag,
                      delay: delay,
                      disposal: disposal});
         break;
@@ -848,6 +494,10 @@ function GifReader(buf) {
     return frames.length;
   };
 
+  this.loopCount = function() {
+    return loop_count;
+  };
+
   this.frameInfo = function(frame_num) {
     if (frame_num < 0 || frame_num >= frames.length)
       throw "Frame index out of range.";
@@ -857,7 +507,7 @@ function GifReader(buf) {
   this.decodeAndBlitFrameBGRA = function(frame_num, pixels) {
     var frame = this.frameInfo(frame_num);
     var num_pixels = frame.width * frame.height;
-    var index_stream = new Uint8Array(num_pixels);  // Atmost 8-bit indices.
+    var index_stream = new Uint8Array(num_pixels);  // At most 8-bit indices.
     GifReaderLZWOutputIndexStream(
         buf, frame.data_offset, index_stream, num_pixels);
     var palette_offset = frame.palette_offset;
@@ -868,12 +518,41 @@ function GifReader(buf) {
     var trans = frame.transparent_index;
     if (trans === null) trans = 256;
 
-    var wstride = (width - frame.width) * 4;
-    var op = ((frame.y * width) + frame.x) * 4;  // output pointer.
-    var linex = frame.width;
+    // We are possibly just blitting to a portion of the entire frame.
+    // That is a subrect within the framerect, so the additional pixels
+    // must be skipped over after we finished a scanline.
+    var framewidth  = frame.width;
+    var framestride = width - framewidth;
+    var xleft       = framewidth;  // Number of subrect pixels left in scanline.
+
+    // Output indicies of the top left and bottom right corners of the subrect.
+    var opbeg = ((frame.y * width) + frame.x) * 4;
+    var opend = ((frame.y + frame.height) * width + frame.x) * 4;
+    var op    = opbeg;
+
+    var scanstride = framestride * 4;
+
+    // Use scanstride to skip past the rows when interlacing.  This is skipping
+    // 7 rows for the first two passes, then 3 then 1.
+    if (frame.interlaced === true) {
+      scanstride += width * 4 * 7;  // Pass 1.
+    }
+
+    var interlaceskip = 8;  // Tracking the row interval in the current pass.
 
     for (var i = 0, il = index_stream.length; i < il; ++i) {
       var index = index_stream[i];
+
+      if (xleft === 0) {  // Beginning of new scan line
+        op += scanstride;
+        xleft = framewidth;
+        if (op >= opend) { // Catch the wrap to switch passes when interlacing.
+          scanstride = framestride * 4 + width * 4 * (interlaceskip-1);
+          // interlaceskip / 2 * 4 is interlaceskip << 1.
+          op = opbeg + (framewidth + framestride) * (interlaceskip << 1);
+          interlaceskip >>= 1;
+        }
+      }
 
       if (index === trans) {
         op += 4;
@@ -886,11 +565,7 @@ function GifReader(buf) {
         pixels[op++] = r;
         pixels[op++] = 255;
       }
-
-      if (--linex === 0) {
-        op += wstride;
-        linex = frame.width;
-      }
+      --xleft;
     }
   };
 
@@ -898,10 +573,9 @@ function GifReader(buf) {
   this.decodeAndBlitFrameRGBA = function(frame_num, pixels) {
     var frame = this.frameInfo(frame_num);
     var num_pixels = frame.width * frame.height;
-    var index_stream = new Uint8Array(num_pixels);  // Atmost 8-bit indices.
+    var index_stream = new Uint8Array(num_pixels);  // At most 8-bit indices.
     GifReaderLZWOutputIndexStream(
         buf, frame.data_offset, index_stream, num_pixels);
-    var op = 0;  // output pointer.
     var palette_offset = frame.palette_offset;
 
     // NOTE(deanm): It seems to be much faster to compare index to 256 than
@@ -910,12 +584,41 @@ function GifReader(buf) {
     var trans = frame.transparent_index;
     if (trans === null) trans = 256;
 
-    var wstride = (width - frame.width) * 4;
-    var op = ((frame.y * width) + frame.x) * 4;  // output pointer.
-    var linex = frame.width;
+    // We are possibly just blitting to a portion of the entire frame.
+    // That is a subrect within the framerect, so the additional pixels
+    // must be skipped over after we finished a scanline.
+    var framewidth  = frame.width;
+    var framestride = width - framewidth;
+    var xleft       = framewidth;  // Number of subrect pixels left in scanline.
+
+    // Output indicies of the top left and bottom right corners of the subrect.
+    var opbeg = ((frame.y * width) + frame.x) * 4;
+    var opend = ((frame.y + frame.height) * width + frame.x) * 4;
+    var op    = opbeg;
+
+    var scanstride = framestride * 4;
+
+    // Use scanstride to skip past the rows when interlacing.  This is skipping
+    // 7 rows for the first two passes, then 3 then 1.
+    if (frame.interlaced === true) {
+      scanstride += width * 4 * 7;  // Pass 1.
+    }
+
+    var interlaceskip = 8;  // Tracking the row interval in the current pass.
 
     for (var i = 0, il = index_stream.length; i < il; ++i) {
       var index = index_stream[i];
+
+      if (xleft === 0) {  // Beginning of new scan line
+        op += scanstride;
+        xleft = framewidth;
+        if (op >= opend) { // Catch the wrap to switch passes when interlacing.
+          scanstride = framestride * 4 + width * 4 * (interlaceskip-1);
+          // interlaceskip / 2 * 4 is interlaceskip << 1.
+          op = opbeg + (framewidth + framestride) * (interlaceskip << 1);
+          interlaceskip >>= 1;
+        }
+      }
 
       if (index === trans) {
         op += 4;
@@ -928,11 +631,7 @@ function GifReader(buf) {
         pixels[op++] = b;
         pixels[op++] = 255;
       }
-
-      if (--linex === 0) {
-        op += wstride;
-        linex = frame.width;
-      }
+      --xleft;
     }
   };
 }
@@ -1083,20 +782,360 @@ function GifReaderLZWOutputIndexStream(code_stream, p, output, output_length) {
 
 try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) { }  // CommonJS.
 
+},{}],2:[function(require,module,exports){
+// A library/utility for generating GIF files
+// Uses Dean McNamee's omggif library
+// and Anthony Dekker's NeuQuant quantizer (JS 0.3 version with many fixes)
+//
+// @author sole / http://soledadpenades.com
+function Animated_GIF(options) {
+    'use strict';
 
-},{}],3:[function(require,module,exports){
-(function() {
+    var GifWriter = require('omggif').GifWriter;
 
-    var Animated_GIF = require('./Animated_GIF');
+    var width = options.width || 160;
+    var height = options.height || 120;
+    var dithering = options.dithering || null;
+    var palette = options.palette || null;
+    var canvas = null, ctx = null, repeat = 0, delay = 250;
+    var frames = [];
+    var numRenderedFrames = 0;
+    var onRenderCompleteCallback = function() {};
+    var onRenderProgressCallback = function() {};
+    var sampleInterval;
+    var workers = [], availableWorkers = [], numWorkers, workerPath;
+    var generatingGIF = false;
 
-    // Supposedly should make the bundle compatible with require.js
-    if(typeof define === 'function' && define.amd) {
-        define(function() { return Animated_GIF; });
-    } else {
-        // Otherwise just tuck it into the window object
-        window.Animated_GIF = Animated_GIF;
+    // We'll try to be a little lenient with the palette so as to make the library easy to use
+    // The only thing we can't cope with is having a non-array so we'll bail on that one.
+    if(palette) {
+
+        if(!(palette instanceof Array)) {
+
+            throw('Palette MUST be an array but it is: ', palette);
+
+        } else {
+
+            // Now there are other two constraints that we will warn about
+            // and silently fix them... somehow:
+
+            // a) Must contain between 2 and 256 colours
+            if(palette.length < 2 || palette.length > 256) {
+                console.error('Palette must hold only between 2 and 256 colours');
+
+                while(palette.length < 2) {
+                    palette.push(0x000000);
+                }
+
+                if(palette.length > 256) {
+                    palette = palette.slice(0, 256);
+                }
+            }
+
+            // b) Must be power of 2
+            if(!powerOfTwo(palette.length)) {
+                console.error('Palette must have a power of two number of colours');
+
+                while(!powerOfTwo(palette.length)) {
+                    palette.splice(palette.length - 1, 1);
+                }
+            }
+
+        }
+
     }
 
-}).call(this);
+    options = options || {};
+    sampleInterval = options.sampleInterval || 10;
+    numWorkers = options.numWorkers || 2;
+    workerPath = options.workerPath || 'Animated_GIF.worker.js'; // TODO possible to find our path?
 
-},{"./Animated_GIF":1}]},{},[3])
+    for(var i = 0; i < numWorkers; i++) {
+        var w = new Worker(workerPath);
+        workers.push(w);
+        availableWorkers.push(w);
+    }
+
+    // ---
+
+    // Return a worker for processing a frame
+    function getWorker() {
+        if(availableWorkers.length === 0) {
+            throw ('No workers left!');
+        }
+
+        return availableWorkers.pop();
+    }
+
+    // Restore a worker to the pool
+    function freeWorker(worker) {
+        availableWorkers.push(worker);
+    }
+
+    // Faster/closurized bufferToString function
+    // (caching the String.fromCharCode values)
+    var bufferToString = (function() {
+        var byteMap = [];
+        for(var i = 0; i < 256; i++) {
+            byteMap[i] = String.fromCharCode(i);
+        }
+
+        return (function(buffer) {
+            var numberValues = buffer.length;
+            var str = '';
+
+            for(var i = 0; i < numberValues; i++) {
+                str += byteMap[ buffer[i] ];
+            }
+
+            return str;
+        });
+    })();
+
+    function startRendering(completeCallback) {
+        var numFrames = frames.length;
+
+        onRenderCompleteCallback = completeCallback;
+
+        for(var i = 0; i < numWorkers && i < frames.length; i++) {
+            processFrame(i);
+        }
+    }
+
+    function processFrame(position) {
+        var frame;
+        var worker;
+
+        frame = frames[position];
+
+        if(frame.beingProcessed || frame.done) {
+            console.error('Frame already being processed or done!', frame.position);
+            onFrameFinished();
+            return;
+        }
+
+        frame.sampleInterval = sampleInterval;
+        frame.beingProcessed = true;
+
+        worker = getWorker();
+
+        worker.onmessage = function(ev) {
+            var data = ev.data;
+
+            // Delete original data, and free memory
+            delete(frame.data);
+
+            // TODO grrr... HACK for object -> Array
+            frame.pixels = Array.prototype.slice.call(data.pixels);
+            frame.palette = Array.prototype.slice.call(data.palette);
+            frame.done = true;
+            frame.beingProcessed = false;
+
+            freeWorker(worker);
+
+            onFrameFinished();
+        };
+
+
+        // TODO transfer objects should be more efficient
+        /*var frameData = frame.data;
+        //worker.postMessage(frameData, [frameData]);
+        worker.postMessage(frameData);*/
+
+        worker.postMessage(frame);
+    }
+
+    function processNextFrame() {
+
+        var position = -1;
+
+        for(var i = 0; i < frames.length; i++) {
+            var frame = frames[i];
+            if(!frame.done && !frame.beingProcessed) {
+                position = i;
+                break;
+            }
+        }
+
+        if(position >= 0) {
+            processFrame(position);
+        }
+    }
+
+
+    function onFrameFinished() { // ~~~ taskFinished
+
+        // The GIF is not written until we're done with all the frames
+        // because they might not be processed in the same order
+        var allDone = frames.every(function(frame) {
+            return !frame.beingProcessed && frame.done;
+        });
+
+        numRenderedFrames++;
+        onRenderProgressCallback(numRenderedFrames * 0.75 / frames.length);
+
+        if(allDone) {
+            if(!generatingGIF) {
+                generateGIF(frames, onRenderCompleteCallback);
+            }
+        } else {
+            setTimeout(processNextFrame, 1);
+        }
+
+    }
+
+
+    // Takes the already processed data in frames and feeds it to a new
+    // GifWriter instance in order to get the binary GIF file
+    function generateGIF(frames, callback) {
+
+        // TODO: Weird: using a simple JS array instead of a typed array,
+        // the files are WAY smaller o_o. Patches/explanations welcome!
+        var buffer = []; // new Uint8Array(width * height * frames.length * 5);
+        var globalPalette;
+        var gifOptions = { loop: repeat };
+
+        // Using global palette but only if we're also using dithering
+        if(dithering !== null && palette !== null) {
+            globalPalette = palette;
+            gifOptions.palette = globalPalette;
+        }
+
+        var gifWriter = new GifWriter(buffer, width, height, gifOptions);
+
+        generatingGIF = true;
+
+        frames.forEach(function(frame, index) {
+
+            var framePalette;
+
+            if(!globalPalette) {
+               framePalette = frame.palette;
+            }
+
+            onRenderProgressCallback(0.75 + 0.25 * frame.position * 1.0 / frames.length);
+            gifWriter.addFrame(0, 0, width, height, frame.pixels, {
+                palette: framePalette,
+                delay: delay
+            });
+        });
+
+        gifWriter.end();
+        onRenderProgressCallback(1.0);
+
+        frames = [];
+        generatingGIF = false;
+
+        callback(buffer);
+    }
+
+
+    function powerOfTwo(value) {
+        return (value !== 0) && ((value & (value - 1)) === 0);
+    }
+
+
+    // ---
+
+    this.setSize = function(w, h) {
+        width = w;
+        height = h;
+        canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        ctx = canvas.getContext('2d');
+    };
+
+    // Internally, GIF uses tenths of seconds to store the delay
+    this.setDelay = function(seconds) {
+        delay = seconds * 0.1;
+    };
+
+    // From GIF: 0 = loop forever, null = not looping, n > 0 = loop n times and stop
+    this.setRepeat = function(r) {
+        repeat = r;
+    };
+
+    this.addFrame = function(element) {
+
+        if(ctx === null) {
+            this.setSize(width, height);
+        }
+
+        ctx.drawImage(element, 0, 0, width, height);
+        var imageData = ctx.getImageData(0, 0, width, height);
+
+        this.addFrameImageData(imageData);
+    };
+
+    this.addFrameImageData = function(imageData) {
+
+        var dataLength = imageData.length,
+            imageDataArray = new Uint8Array(imageData.data);
+
+        frames.push({
+            data: imageDataArray,
+            width: imageData.width,
+            height: imageData.height,
+            palette: palette,
+            dithering: dithering,
+            done: false,
+            beingProcessed: false,
+            position: frames.length
+        });
+    };
+
+    this.onRenderProgress = function(callback) {
+        onRenderProgressCallback = callback;
+    };
+
+    this.isRendering = function() {
+        return generatingGIF;
+    };
+
+    this.getBase64GIF = function(completeCallback) {
+
+        var onRenderComplete = function(buffer) {
+            var str = bufferToString(buffer);
+            var gif = 'data:image/gif;base64,' + btoa(str);
+            completeCallback(gif);
+        };
+
+        startRendering(onRenderComplete);
+
+    };
+
+
+    this.getBlobGIF = function(completeCallback) {
+
+        var onRenderComplete = function(buffer) {
+            var array = new Uint8Array(buffer);
+            var blob = new Blob([ array ], { type: 'image/gif' });
+            completeCallback(blob);
+        };
+
+        startRendering(onRenderComplete);
+
+    };
+
+
+    // Once this function is called, the object becomes unusable
+    // and you'll need to create a new one.
+    this.destroy = function() {
+
+        // Explicitly ask web workers to die so they are explicitly GC'ed
+        workers.forEach(function(w) {
+            w.terminate();
+        });
+
+    };
+
+}
+
+// Not using the full blown exporter because this is supposed to be built
+// into dist/Animated_GIF.js using a build step with browserify
+module.exports = Animated_GIF;
+
+},{"omggif":1}]},{},[2])
+(2)
+});

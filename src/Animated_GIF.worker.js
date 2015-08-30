@@ -1,3 +1,6 @@
+var NeuQuant = require('neuquant');
+var Dithering = require('node-dithering');
+
 function channelizePalette( palette ) {
     var channelizedPalette = [];
 

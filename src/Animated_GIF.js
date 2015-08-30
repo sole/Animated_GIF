@@ -6,7 +6,7 @@
 function Animated_GIF(options) {
     'use strict';
 
-    var GifWriter = require('./lib/omggif').GifWriter;
+    var GifWriter = require('omggif').GifWriter;
 
     var width = options.width || 160;
     var height = options.height || 120;
