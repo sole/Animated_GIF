@@ -1,14 +1,354 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+
+function colorClamp(value) {
+	if(value < 0) return 0;
+	else if(value > 255) return 255;
+
+	return value;
+}
+
+var bayerMatrix8x8 = [
+	[  1, 49, 13, 61,  4, 52, 16, 64 ],
+	[ 33, 17, 45, 29, 36, 20, 48, 32 ],
+	[  9, 57,  5, 53, 12, 60,  8, 56 ],
+	[ 41, 25, 37, 21, 44, 28, 40, 24 ],
+	[  3, 51, 15, 63,  2, 50, 14, 62 ],
+	[ 35, 19, 47, 31, 34, 18, 46, 30 ],
+	[ 11, 59,  7, 55, 10, 58,  6, 54 ],
+	[ 43, 27, 39, 23, 42, 26, 38, 22 ]
+	];
+
+	// int r, int g, int b, int[][] palette, int paletteLength
+	function getClosestPaletteColorIndex(r, g, b, palette, paletteLength) {
+		var minDistance = 195076;
+		var diffR, diffG, diffB;
+		var distanceSquared;
+		var bestIndex = 0;
+		var paletteChannels;
+
+		for(var i = 0; i < paletteLength; i++) {
+
+			paletteChannels = palette[i];
+			diffR = r - paletteChannels[0];
+			diffG = g - paletteChannels[1];
+			diffB = b - paletteChannels[2];
+
+			distanceSquared = diffR*diffR + diffG*diffG + diffB*diffB;
+
+			if(distanceSquared < minDistance) {
+				bestIndex = i;
+				minDistance = distanceSquared;
+			}
+
+		}
+
+		return bestIndex;
+	}
+
+// TODO: inPixels -> inComponents or inColors or something more accurate
+function BayerDithering(inPixels, width, height, palette) {
+	var offset = 0;
+	var indexedOffset = 0;
+	var r, g, b;
+	var pixel, threshold, index;
+	var paletteLength = palette.length;
+	var matrix = bayerMatrix8x8;
+	var indexedPixels = new Uint8Array( width * height );
+
+	var modI = 8;
+	var modJ = 8;
+
+	for(var j = 0; j < height; j++) {
+		var modj = j % modJ;
+
+		for(var i = 0; i < width; i++) {
+
+			threshold = matrix[i % modI][modj];
+
+			r = colorClamp( inPixels[offset++] + threshold );
+			g = colorClamp( inPixels[offset++] + threshold );
+			b = colorClamp( inPixels[offset++] + threshold );
+
+			index = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
+			indexedPixels[indexedOffset++] = index;
+
+		}
+	}
+
+	return indexedPixels;
+}
+
+
+function ClosestDithering(inPixels, width, height, palette) {
+
+	var offset = 0;
+	var indexedOffset = 0;
+	var r, g, b;
+	var index;
+	var paletteLength = palette.length;
+	var matrix = bayerMatrix8x8;
+	var numPixels = width * height;
+	var indexedPixels = new Uint8Array( numPixels );
+
+	for(var i = 0; i < numPixels; i++) {
+
+		r = inPixels[offset++];
+		g = inPixels[offset++];
+		b = inPixels[offset++];
+
+		indexedPixels[i] = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
+
+	}
+
+	return indexedPixels;
+
+}
+
+
+function FloydSteinberg(inPixels, width, height, palette) {
+	var paletteLength = palette.length;
+	var offset = 0;
+	var indexedOffset = 0;
+	var r, g, b;
+	var widthLimit = width - 1;
+	var heightLimit = height - 1;
+	var offsetNextI, offsetNextJ;
+	var offsetPrevINextJ;
+	var channels, nextChannels;
+	var indexedPixels = new Uint8Array( width * height );
+
+	for(var j = 0; j < height; j++) {
+		for(var i = 0; i < width; i++) {
+
+			r = colorClamp(inPixels[offset++]);
+			g = colorClamp(inPixels[offset++]);
+			b = colorClamp(inPixels[offset++]);
+
+			var colorIndex = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
+			var paletteColor = palette[colorIndex];
+			var closestColor = paletteColor[3];
+
+			// We are done with finding the best value for this pixel
+			indexedPixels[indexedOffset] = colorIndex;
+
+			// Now find difference between assigned value and original color
+			// and propagate that error forward
+			var errorR = r - paletteColor[0];
+			var errorG = g - paletteColor[1];
+			var errorB = b - paletteColor[2];
+
+			if(i < widthLimit) {
+
+				offsetNextI = offset + 1;
+
+				inPixels[offsetNextI++] += (errorR * 7) >> 4;
+				inPixels[offsetNextI++] += (errorG * 7) >> 4;
+				inPixels[offsetNextI++] += (errorB * 7) >> 4;
+
+			}
+
+
+			if(j < heightLimit) {
+
+				if(i > 0) {
+
+					offsetPrevINextJ = offset - 1 + width;
+
+					inPixels[offsetPrevINextJ++] += (errorR * 3) >> 4;
+					inPixels[offsetPrevINextJ++] += (errorG * 3) >> 4;
+					inPixels[offsetPrevINextJ++] += (errorB * 3) >> 4;
+
+				}
+
+				offsetNextJ = offset + width;
+
+				inPixels[offsetNextJ++] += (errorR * 5) >> 4;
+				inPixels[offsetNextJ++] += (errorG * 5) >> 4;
+				inPixels[offsetNextJ++] += (errorB * 5) >> 4;
+
+
+				if(i < widthLimit) {
+
+					inPixels[offsetNextJ++] += errorR >> 4;
+					inPixels[offsetNextJ++] += errorG >> 4;
+					inPixels[offsetNextJ++] += errorB >> 4;
+
+				}
+
+			}
+
+			indexedOffset++;
+		}
+	}
+
+	return indexedPixels;
+}
+
+module.exports = {
+	Bayer: BayerDithering,
+	Closest: ClosestDithering,
+	FloydSteinberg: FloydSteinberg
+};
+
+
+},{}],2:[function(require,module,exports){
+var NeuQuant = require('./lib/NeuQuant');
+var Dithering = require('node-dithering');
+
+function channelizePalette( palette ) {
+    var channelizedPalette = [];
+
+    for(var i = 0; i < palette.length; i++) {
+        var color = palette[i];
+
+        var r = (color & 0xFF0000) >> 16;
+        var g = (color & 0x00FF00) >>  8;
+        var b = (color & 0x0000FF);
+
+        channelizedPalette.push([ r, g, b, color ]);
+    }
+
+    return channelizedPalette;
+
+}
+
+
+function dataToRGB( data, width, height ) {
+    var i = 0;
+    var length = width * height * 4;
+    var rgb = [];
+
+    while(i < length) {
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        rgb.push( data[i++] );
+        i++; // for the alpha channel which we don't care about
+    }
+
+    return rgb;
+}
+
+
+function componentizedPaletteToArray(paletteRGB) {
+
+    var paletteArray = [];
+
+    for(var i = 0; i < paletteRGB.length; i += 3) {
+        var r = paletteRGB[ i ];
+        var g = paletteRGB[ i + 1 ];
+        var b = paletteRGB[ i + 2 ];
+        paletteArray.push(r << 16 | g << 8 | b);
+    }
+
+    return paletteArray;
+}
+
+
+// This is the "traditional" Animated_GIF style of going from RGBA to indexed color frames
+function processFrameWithQuantizer(imageData, width, height, sampleInterval) {
+
+    var rgbComponents = dataToRGB( imageData, width, height );
+    var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
+    var paletteRGB = nq.process();
+    var paletteArray = new Uint32Array(componentizedPaletteToArray(paletteRGB));
+
+    var numberPixels = width * height;
+    var indexedPixels = new Uint8Array(numberPixels);
+
+    var k = 0;
+    for(var i = 0; i < numberPixels; i++) {
+        r = rgbComponents[k++];
+        g = rgbComponents[k++];
+        b = rgbComponents[k++];
+        indexedPixels[i] = nq.map(r, g, b);
+    }
+
+    return {
+        pixels: indexedPixels,
+        palette: paletteArray
+    };
+
+}
+
+
+// And this is a version that uses dithering against of quantizing
+// It can also use a custom palette if provided, or will build one otherwise
+function processFrameWithDithering(imageData, width, height, ditheringType, palette) {
+
+    // Extract component values from data
+    var rgbComponents = dataToRGB( imageData, width, height );
+
+
+    // Build palette if none provided
+    if(palette === null) {
+
+        var nq = new NeuQuant(rgbComponents, rgbComponents.length, 16);
+        var paletteRGB = nq.process();
+        palette = componentizedPaletteToArray(paletteRGB);
+
+    }
+
+    var paletteArray = new Uint32Array( palette );
+    var paletteChannels = channelizePalette( palette );
+
+    // Convert RGB image to indexed image
+    var ditheringFunction;
+
+    if(ditheringType === 'closest') {
+        ditheringFunction = Dithering.Closest;
+    } else if(ditheringType === 'floyd') {
+        ditheringFunction = Dithering.FloydSteinberg;
+    } else {
+        ditheringFunction = Dithering.Bayer;
+    }
+
+    pixels = ditheringFunction(rgbComponents, width, height, paletteChannels);
+
+    return ({
+        pixels: pixels,
+        palette: paletteArray
+    });
+
+}
+
+
+// ~~~
+
+function run(frame) {
+    var width = frame.width;
+    var height = frame.height;
+    var imageData = frame.data;
+    var dithering = frame.dithering;
+    var palette = frame.palette;
+    var sampleInterval = frame.sampleInterval;
+
+    if(dithering) {
+        return processFrameWithDithering(imageData, width, height, dithering, palette);
+    } else {
+        return processFrameWithQuantizer(imageData, width, height, sampleInterval);
+    }
+
+}
+
+
+self.onmessage = function(ev) {
+    var data = ev.data;
+    var response = run(data);
+    postMessage(response);
+};
+
+},{"./lib/NeuQuant":3,"node-dithering":1}],3:[function(require,module,exports){
 /*
 * NeuQuant Neural-Net Quantization Algorithm
 * ------------------------------------------
-* 
+*
 * Copyright (c) 1994 Anthony Dekker
-* 
+*
 * NEUQUANT Neural-Net quantization algorithm by Anthony Dekker, 1994. See
 * "Kohonen neural networks for optimal colour quantization" in "Network:
 * Computation in Neural Systems" Vol. 5 (1994) pp 351-367. for a discussion of
 * the algorithm.
-* 
+*
 * Any party obtaining a copy of these files from the author, directly or
 * indirectly, is granted, free of charge, a full and unrestricted irrevocable,
 * world-wide, paid up, royalty-free, nonexclusive right and license to deal in
@@ -18,7 +358,7 @@
 * receive copies from any such party to do so, with the only requirement being
 * that this copyright notice remain intact.
 */
- 
+
 /*
 * This class handles Neural-Net quantization algorithm
 * @author Kevin Weiner (original Java version - kweiner@fmsware.com)
@@ -29,7 +369,7 @@
 * Also implement fix in color conversion described at http://stackoverflow.com/questions/16371712/neuquant-js-javascript-color-quantization-hidden-bug-in-js-conversion
 */
 
-function NeuQuant() {
+module.exports = function NeuQuant() {
 
     var netsize = 256; // number of colours used
 
@@ -79,7 +419,7 @@ function NeuQuant() {
     var alpharadbshift = (alphabiasshift + radbiasshift);
     var alpharadbias = (1 << alpharadbshift);
 
-    
+
     // Input image
     var thepicture;
     // Height * Width * 3
@@ -148,7 +488,7 @@ function NeuQuant() {
 
         previouscol = 0;
         startpos = 0;
-        
+
         for (i = 0; i < netsize; i++)
         {
 
@@ -157,7 +497,7 @@ function NeuQuant() {
             smallval = p[1]; // index on g
             // find smallest in i..netsize-1
             for (j = i + 1; j < netsize; j++) {
-                
+
                 q = network[j];
 
                 if (q[1] < smallval) { // index on g
@@ -167,7 +507,7 @@ function NeuQuant() {
             }
 
             q = network[smallpos];
-            
+
             // swap p (i) and q (smallpos) entries
             if (i != smallpos) {
                 j = q[0];
@@ -207,7 +547,7 @@ function NeuQuant() {
 
     }
 
-    
+
     // Main Learning Loop
 
     function learn() {
@@ -437,7 +777,7 @@ function NeuQuant() {
             network[i][3] = i; // record colour no
         }
     }
-    
+
     // Move adjacent neurons by precomputed alpha*(1-((i-j)^2/[r]^2))
     // in radpower[|i-j|]
     function alterneigh(rad, i, b, g, r) {
@@ -502,7 +842,7 @@ function NeuQuant() {
 
     }
 
-    
+
     // Move neuron i towards biased (b,g,r) by factor alpha
     function altersingle(alpha, i, b, g, r) {
 
@@ -596,339 +936,5 @@ function NeuQuant() {
 
     return exports;
 }
-var Dithering = (function() {
 
-    'use strict';
-
-    function colorClamp(value) {
-        if(value < 0) return 0;
-        else if(value > 255) return 255;
-
-        return value;
-    }
-
-    var bayerMatrix8x8 = [
-        [  1, 49, 13, 61,  4, 52, 16, 64 ],
-        [ 33, 17, 45, 29, 36, 20, 48, 32 ],
-        [  9, 57,  5, 53, 12, 60,  8, 56 ],
-        [ 41, 25, 37, 21, 44, 28, 40, 24 ],
-        [  3, 51, 15, 63,  2, 50, 14, 62 ],
-        [ 35, 19, 47, 31, 34, 18, 46, 30 ],
-        [ 11, 59,  7, 55, 10, 58,  6, 54 ],
-        [ 43, 27, 39, 23, 42, 26, 38, 22 ]
-    ];
-
-    // int r, int g, int b, int[][] palette, int paletteLength
-    function getClosestPaletteColorIndex(r, g, b, palette, paletteLength) {
-        var minDistance = 195076;
-        var diffR, diffG, diffB;
-        var distanceSquared;
-        var bestIndex = 0;
-        var paletteChannels;
-
-        for(var i = 0; i < paletteLength; i++) {
-
-            paletteChannels = palette[i];
-            diffR = r - paletteChannels[0];
-            diffG = g - paletteChannels[1];
-            diffB = b - paletteChannels[2];
-
-            distanceSquared = diffR*diffR + diffG*diffG + diffB*diffB;
-
-            if(distanceSquared < minDistance) {
-                bestIndex = i;
-                minDistance = distanceSquared;
-            }
-
-        }
-
-        return bestIndex;
-    }
-
-    // TODO: inPixels -> inComponents or inColors or something more accurate
-    function BayerDithering(inPixels, width, height, palette) {
-        var offset = 0;
-        var indexedOffset = 0;
-        var r, g, b;
-        var pixel, threshold, index;
-        var paletteLength = palette.length;
-        var matrix = bayerMatrix8x8;
-        var indexedPixels = new Uint8Array( width * height );
-
-        var modI = 8;
-        var modJ = 8;
-
-        for(var j = 0; j < height; j++) {
-            var modj = j % modJ;
-
-            for(var i = 0; i < width; i++) {
-
-                threshold = matrix[i % modI][modj];
-
-                r = colorClamp( inPixels[offset++] + threshold );
-                g = colorClamp( inPixels[offset++] + threshold );
-                b = colorClamp( inPixels[offset++] + threshold );
-
-                index = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
-                indexedPixels[indexedOffset++] = index;
-
-            }
-        }
-
-        return indexedPixels;
-    }
-
-
-    function ClosestDithering(inPixels, width, height, palette) {
-
-        var offset = 0;
-        var indexedOffset = 0;
-        var r, g, b;
-        var index;
-        var paletteLength = palette.length;
-        var matrix = bayerMatrix8x8;
-        var numPixels = width * height;
-        var indexedPixels = new Uint8Array( numPixels );
-
-        for(var i = 0; i < numPixels; i++) {
-
-            r = inPixels[offset++];
-            g = inPixels[offset++];
-            b = inPixels[offset++];
-
-            indexedPixels[i] = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
-
-        }
-
-        return indexedPixels;
-
-    }
-
-
-    function FloydSteinberg(inPixels, width, height, palette) {
-        var paletteLength = palette.length;
-        var offset = 0;
-        var indexedOffset = 0;
-        var r, g, b;
-        var widthLimit = width - 1;
-        var heightLimit = height - 1;
-        var offsetNextI, offsetNextJ;
-        var offsetPrevINextJ;
-        var channels, nextChannels;
-        var indexedPixels = new Uint8Array( width * height );
-
-        for(var j = 0; j < height; j++) {
-            for(var i = 0; i < width; i++) {
-
-                r = colorClamp(inPixels[offset++]);
-                g = colorClamp(inPixels[offset++]);
-                b = colorClamp(inPixels[offset++]);
-
-                var colorIndex = getClosestPaletteColorIndex(r, g, b, palette, paletteLength);
-                var paletteColor = palette[colorIndex];
-                var closestColor = paletteColor[3];
-
-                // We are done with finding the best value for this pixel
-                indexedPixels[indexedOffset] = colorIndex;
-
-                // Now find difference between assigned value and original color
-                // and propagate that error forward
-                var errorR = r - paletteColor[0];
-                var errorG = g - paletteColor[1];
-                var errorB = b - paletteColor[2];
-
-                if(i < widthLimit) {
-
-                    offsetNextI = offset + 1;
-                   
-                    inPixels[offsetNextI++] += (errorR * 7) >> 4;
-                    inPixels[offsetNextI++] += (errorG * 7) >> 4;
-                    inPixels[offsetNextI++] += (errorB * 7) >> 4;
-
-                }
-
-
-                if(j < heightLimit) {
-
-                    if(i > 0) {
-                    
-                        offsetPrevINextJ = offset - 1 + width;
-
-                        inPixels[offsetPrevINextJ++] += (errorR * 3) >> 4;
-                        inPixels[offsetPrevINextJ++] += (errorG * 3) >> 4;
-                        inPixels[offsetPrevINextJ++] += (errorB * 3) >> 4;
-                    
-                    }
-
-                    offsetNextJ = offset + width;
-
-                    inPixels[offsetNextJ++] += (errorR * 5) >> 4;
-                    inPixels[offsetNextJ++] += (errorG * 5) >> 4;
-                    inPixels[offsetNextJ++] += (errorB * 5) >> 4;
-
-
-                    if(i < widthLimit) {
-
-                        inPixels[offsetNextJ++] += errorR >> 4;
-                        inPixels[offsetNextJ++] += errorG >> 4;
-                        inPixels[offsetNextJ++] += errorB >> 4;
-                
-                    }
-                
-                }
-
-                indexedOffset++;
-            }
-        }
-
-        return indexedPixels;
-    }
-
-    return {
-        Bayer: BayerDithering,
-        Closest: ClosestDithering,
-        FloydSteinberg: FloydSteinberg
-    };
-
-})();
-function channelizePalette( palette ) {
-    var channelizedPalette = [];
-
-    for(var i = 0; i < palette.length; i++) {
-        var color = palette[i];
-
-        var r = (color & 0xFF0000) >> 16;
-        var g = (color & 0x00FF00) >>  8;
-        var b = (color & 0x0000FF);
-
-        channelizedPalette.push([ r, g, b, color ]);
-    }
-
-    return channelizedPalette;
-
-}
-
-
-function dataToRGB( data, width, height ) {
-    var i = 0;
-    var length = width * height * 4;
-    var rgb = [];
-
-    while(i < length) {
-        rgb.push( data[i++] );
-        rgb.push( data[i++] );
-        rgb.push( data[i++] );
-        i++; // for the alpha channel which we don't care about
-    }
-
-    return rgb;
-}
-
-
-function componentizedPaletteToArray(paletteRGB) {
-
-    var paletteArray = [];
-
-    for(var i = 0; i < paletteRGB.length; i += 3) {
-        var r = paletteRGB[ i ];
-        var g = paletteRGB[ i + 1 ];
-        var b = paletteRGB[ i + 2 ];
-        paletteArray.push(r << 16 | g << 8 | b);
-    }
-
-    return paletteArray;
-}
-
-
-// This is the "traditional" Animated_GIF style of going from RGBA to indexed color frames
-function processFrameWithQuantizer(imageData, width, height, sampleInterval) {
-
-    var rgbComponents = dataToRGB( imageData, width, height );
-    var nq = new NeuQuant(rgbComponents, rgbComponents.length, sampleInterval);
-    var paletteRGB = nq.process();
-    var paletteArray = new Uint32Array(componentizedPaletteToArray(paletteRGB));
-
-    var numberPixels = width * height;
-    var indexedPixels = new Uint8Array(numberPixels);
-
-    var k = 0;
-    for(var i = 0; i < numberPixels; i++) {
-        r = rgbComponents[k++];
-        g = rgbComponents[k++];
-        b = rgbComponents[k++];
-        indexedPixels[i] = nq.map(r, g, b);
-    }
-
-    return {
-        pixels: indexedPixels,
-        palette: paletteArray
-    };
-
-}
-
-
-// And this is a version that uses dithering against of quantizing
-// It can also use a custom palette if provided, or will build one otherwise
-function processFrameWithDithering(imageData, width, height, ditheringType, palette) {
-
-    // Extract component values from data
-    var rgbComponents = dataToRGB( imageData, width, height );
-
-
-    // Build palette if none provided
-    if(palette === null) {
-
-        var nq = new NeuQuant(rgbComponents, rgbComponents.length, 16);
-        var paletteRGB = nq.process();
-        palette = componentizedPaletteToArray(paletteRGB);
-
-    }
-
-    var paletteArray = new Uint32Array( palette );
-    var paletteChannels = channelizePalette( palette );
-
-    // Convert RGB image to indexed image
-    var ditheringFunction;
-
-    if(ditheringType === 'closest') {
-        ditheringFunction = Dithering.Closest;
-    } else if(ditheringType === 'floyd') {
-        ditheringFunction = Dithering.FloydSteinberg;
-    } else {
-        ditheringFunction = Dithering.Bayer;
-    }
-
-    pixels = ditheringFunction(rgbComponents, width, height, paletteChannels);
-
-    return ({
-        pixels: pixels,
-        palette: paletteArray
-    });
-
-}
-
-
-// ~~~
-
-function run(frame) {
-    var width = frame.width;
-    var height = frame.height;
-    var imageData = frame.data;
-    var dithering = frame.dithering;
-    var palette = frame.palette;
-    var sampleInterval = frame.sampleInterval;
-
-    if(dithering) {
-        return processFrameWithDithering(imageData, width, height, dithering, palette);
-    } else {
-        return processFrameWithQuantizer(imageData, width, height, sampleInterval);
-    }
-
-}
-
-
-self.onmessage = function(ev) {
-    var data = ev.data;
-    var response = run(data);
-    postMessage(response);
-};
+},{}]},{},[2]);
