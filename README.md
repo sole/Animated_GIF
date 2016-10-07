@@ -11,8 +11,7 @@ Include `dist/Animated_GIF.js` in your HTML.
 ```javascript
 var imgs = document.querySelectorAll('img');
 
-// change workerPath to point to where Animated_GIF.worker.js is
-var ag = new Animated_GIF({ workerPath: 'dist/Animated_GIF.worker.js' }); 
+var ag = new Animated_GIF(); 
 ag.setSize(320, 240);
 
 for(var i = 0; i < imgs.length; i++) {
@@ -33,7 +32,7 @@ If you instance lots of `Animated_GIF` objects, it's strongly recommended that y
 
 ## Minified versions
 
-You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`. Remember to set the worker path to `dist/Animated_GIF.worker.min.js`!
+You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`.
 
 ## Available options
 
@@ -41,7 +40,6 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
 
 - `sampleInterval`: how many pixels to skip when creating the palette. Default is 10. Less is better, but slower.
 - `numWorkers`: how many web workers to use. Default is 2.
-- `workerPath`: path to the `Animated_GIF.worker.js` file (or `Animated_GIF.worker.min.js`). Default is `dist/Animated_GIF.worker.js`, change accordingly if you place the files somewhere else than `dist`.
 - `useQuantizer`: this is `true` by default, and provides the highest quality results, at the cost of slower processing and bigger files. When this is enabled, a neural network quantizer will be used to find the best palette for each frame. No dithering is available in this case, as the colours are chosen with the quantizer too.
 - `dithering`: selects how to best spread the error in colour mapping, to *conceal* the fact that we're using a palette and not true color. Note that using this option automatically disables the aforementioned quantizer. Best results if you pass in a palette, but if not we'll create one using the colours in the first frame. Possible options:
     - `bayer`: creates a somewhat nice and retro 'x' hatched pattern
@@ -59,8 +57,6 @@ Check the files in the `tests` folder:
 * [Dithering](http://sole.github.io/Animated_GIF/tests/dithering.html)
 * [Stress](http://sole.github.io/Animated_GIF/tests/stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests/sample_interval.html)
-
-If you want to access the examples locally you'll have to run a local web server because of security restrictions when loading the web worker.
 
 Just fire up the server from the root folder (e.g. `Animated_GIF`) and access the files using relative paths. One way of doing it is using the simple Python web server:
 
@@ -82,7 +78,7 @@ Some sites and apps using it:
 Here's a quick walkthrough of each of the files in `src/` and what they do:
 
 * `Animated_GIF.js` - definition of the `Animated_GIF` class. Holds the logic for the queueing and rendering of the files, and parsing config options.
-* `Animated_GIF.worker.js` - code for the web worker that color-indexes frames in the background, using `Dithering.js` and `NeuQuant.js`
+* `Animated_GIF.worker.js` - code for the web worker that color-indexes frames in the background, using `Dithering.js` and `NeuQuant.js`. This is bundled in `dist/Animated_GIF.js`
 * `Dithering.js` - class with three different types of Dithering algorithms
 * `main.js` - stub in order to export the library using Browserify (you won't generally need to touch this one)
 
