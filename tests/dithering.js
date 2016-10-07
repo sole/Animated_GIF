@@ -8,7 +8,7 @@ window.onload = function() {
 	var width = srcImage.clientWidth;
 	var height = srcImage.clientHeight;
 	var lastTime = 0;
-	
+
 	generateImage();
 
 	// ---
@@ -19,7 +19,6 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: null,
-			workerPath: '../dist/Animated_GIF.worker.js',
             palette: [ 0x000000, 0xFFFFFF ], // Using a very simple black and white palette
 			dithering: dithering
 		});
@@ -58,7 +57,7 @@ window.onload = function() {
 		});
 	}
 
-    
+
 	function getStatusText(index, gif, elapsed) {
 		// TODO: render palette swatches too
 		return  'dithering =  ' + ditheringTypes[index] + ' / GIF length = ' + toKB(gif.length) + ' elapsed = ' + elapsed;

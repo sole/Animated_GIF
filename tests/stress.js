@@ -34,8 +34,8 @@ window.onload = function() {
         lastCaptureTime = now;
 
         var color;
-        
-        if(elapsed > 1) { 
+
+        if(elapsed > 1) {
             color = 'red';
             console.log('TOO SLOW! on the ' + iterations + ' == ' + elapsed + ' seconds');
         } else {
@@ -57,7 +57,7 @@ window.onload = function() {
 
 
         // Make a one-frame GIF
-        var ag = new Animated_GIF({ repeat: null, workerPath: '../dist/Animated_GIF.worker.js' });
+        var ag = new Animated_GIF({ repeat: null });
         ag.setSize(width, height);
         ag.addFrame(canvasAnimation);
         ag.getBase64GIF(function(gif) {

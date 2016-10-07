@@ -19,9 +19,8 @@ window.onload = function() {
 
 	var width = srcImage.clientWidth;
 	var height = srcImage.clientHeight;
-    var workerPath = '../dist/Animated_GIF.worker.js';
 	var lastTime = 0;
-	
+
 
     // We'll start by generating static one frame versions of the first image
     // using different palettes
@@ -33,7 +32,6 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: null,
-			workerPath: workerPath,
             palette: palettes[i],
 			dithering: 'bayer'
 		});
@@ -80,7 +78,6 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: 0,
-			workerPath: workerPath,
 			palette: palettes[i],
 			dithering: 'bayer'
 		});
@@ -100,7 +97,7 @@ window.onload = function() {
 			var now = Date.now();
 			var elapsed = ((now - lastTime) * 0.001).toFixed(2);
 			var div = document.createElement('div');
-           
+
 			var statusText = getStatusText(i, gif, elapsed);
 			div.innerHTML = '<h3>' + statusText + '</h3>';
 

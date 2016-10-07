@@ -9,7 +9,7 @@ window.onload = function() {
 	var width = srcImage.clientWidth;
 	var height = srcImage.clientHeight;
 	var lastTime = 0;
-	
+
 	generateImage();
 
 
@@ -19,7 +19,6 @@ window.onload = function() {
 
 		var ag = new Animated_GIF({
 			repeat: null,
-			workerPath: '../dist/Animated_GIF.worker.js',
 			sampleInterval: sampleInterval
 		});
 
