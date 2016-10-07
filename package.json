@@ -4,10 +4,9 @@
   "description": "Javascript library for creating animated GIFs",
   "main": "src/Animated_GIF.js",
   "scripts": {
-    "build": "npm run build:main && npm run build:worker",
-    "build:main": "browserify src/Animated_GIF.js --standalone Animated_GIF | tee dist/Animated_GIF.js | uglifyjs --mangle > dist/Animated_GIF.min.js",
-    "build:worker": "browserify src/Animated_GIF.worker.js | tee dist/Animated_GIF.worker.js | uglifyjs --mangle > dist/Animated_GIF.worker.min.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.js",
+    "minify": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.min.js -g uglifyify -t uglifyify",
+    "prepublish": "npm run build && npm run minify"
   },
   "repository": {
     "type": "git",
@@ -23,10 +22,16 @@
   "homepage": "https://github.com/sole/Animated_GIF",
   "devDependencies": {
     "browserify": "^13.1.0",
-    "uglify-js": "^2.7.3"
+    "uglifyify": "^3.0.3",
+    "workerify": "^0.3.0"
   },
   "dependencies": {
     "node-dithering": "0.0.1",
     "omggif": "^1.0.8"
+  },
+  "browserify": {
+    "transform": [
+      "workerify"
+    ]
   }
 }

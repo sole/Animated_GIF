@@ -18,7 +18,7 @@ function Animated_GIF(options) {
     var onRenderCompleteCallback = function() {};
     var onRenderProgressCallback = function() {};
     var sampleInterval;
-    var workers = [], availableWorkers = [], numWorkers, workerPath;
+    var workers = [], availableWorkers = [], numWorkers;
     var generatingGIF = false;
 
     // We'll try to be a little lenient with the palette so as to make the library easy to use
@@ -46,7 +46,7 @@ function Animated_GIF(options) {
                     palette = palette.slice(0, 256);
                 }
             }
-            
+
             // b) Must be power of 2
             if(!powerOfTwo(palette.length)) {
                 console.error('Palette must have a power of two number of colours');
@@ -55,7 +55,7 @@ function Animated_GIF(options) {
                     palette.splice(palette.length - 1, 1);
                 }
             }
-            
+
         }
 
     }
@@ -63,10 +63,9 @@ function Animated_GIF(options) {
     options = options || {};
     sampleInterval = options.sampleInterval || 10;
     numWorkers = options.numWorkers || 2;
-    workerPath = options.workerPath || 'Animated_GIF.worker.js'; // TODO possible to find our path?
 
     for(var i = 0; i < numWorkers; i++) {
-        var w = new Worker(workerPath);
+        var w = new Worker('./Animated_GIF.worker');
         workers.push(w);
         availableWorkers.push(w);
     }
@@ -221,7 +220,7 @@ function Animated_GIF(options) {
         generatingGIF = true;
 
         frames.forEach(function(frame, index) {
-            
+
             var framePalette;
 
             if(!globalPalette) {
