@@ -5,6 +5,7 @@
   "main": "src/Animated_GIF.js",
   "scripts": {
     "build": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.js",
+    "watch": "watchify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.js",
     "minify": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.min.js -g uglifyify -t uglifyify",
     "prepublish": "npm run build && npm run minify"
   },
@@ -23,6 +24,7 @@
   "devDependencies": {
     "browserify": "^13.1.0",
     "uglifyify": "^3.0.3",
+    "watchify": "^3.7.0",
     "workerify": "^0.3.0"
   },
   "dependencies": {
