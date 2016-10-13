@@ -139,4 +139,4 @@ And then, to build the `dist` files
 * browserify
 
 [npm-image]: https://img.shields.io/npm/v/animated_gif.svg
-[npm-url]: https://npmjs.org/package/animated_gif.js
+[npm-url]: https://npmjs.org/package/animated_gif
