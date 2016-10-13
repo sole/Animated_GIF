@@ -1,8 +1,6 @@
-# Animated_GIF
+# Animated_GIF [![NPM Version][npm-image]][npm-url]
 
 _A Javascript library for creating animated GIFs_
-
-**Version 0.0.3**
 
 ## How to use it?
 
@@ -30,9 +28,31 @@ ag.getBase64GIF(function(image) {
 
 If you instance lots of `Animated_GIF` objects, it's strongly recommended that you call their `destroy` method once you're done rendering the GIFs, as browsers don't seem to be happy otherwise. See the [stress test](tests/stress.html) for an example of this in use!
 
-## Minified versions
+### Minified versions
 
-You can also use the minified versions in `dist/`: `dist/Animated_GIF.min.js`.
+There's a minified version in `dist/`: `dist/Animated_GIF.min.js`.
+
+### Using from npm
+
+You can also use this via npm.
+
+To install:
+
+```bash
+npm install --save animated_gif
+```
+
+To use:
+
+```javascript
+var Animated_GIF = require('animated_gif');
+
+// And then the examples are as before
+var ag = new Animated_GIF(); 
+ag.setSize(320, 240);
+
+// ... etc
+```
 
 ## Available options
 
@@ -58,7 +78,7 @@ Check the files in the `tests` folder:
 * [Stress](http://sole.github.io/Animated_GIF/tests/stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests/sample_interval.html)
 
-Just fire up the server from the root folder (e.g. `Animated_GIF`) and access the files using relative paths. One way of doing it is using the simple Python web server:
+Start the server from the root folder (e.g. `Animated_GIF`). One way of doing it is using the simple Python web server:
 
 ````bash
 python -m SimpleHTTPServer
@@ -66,26 +86,28 @@ python -m SimpleHTTPServer
 
 starts a server in `http://localhost:8000`. So you can now go to `http://localhost:8000/tests/` and see the available examples.
 
+<!--
 ## See it in action
 
 Some sites and apps using it:
 
 * [chat.meatspac.es](http://chat.meatspac.es)
 * [rtcamera](http://rtcamera.apps.5013.es/)
+-->
 
-## Hacking / contributing / walkthrough
+## Contributing / walkthrough
 
 Here's a quick walkthrough of each of the files in `src/` and what they do:
 
 * `Animated_GIF.js` - definition of the `Animated_GIF` class. Holds the logic for the queueing and rendering of the files, and parsing config options.
-* `Animated_GIF.worker.js` - code for the web worker that color-indexes frames in the background, using `Dithering.js` and `NeuQuant.js`. This is bundled in `dist/Animated_GIF.js`
-* `Dithering.js` - class with three different types of Dithering algorithms
+* `Animated_GIF.worker.js` - code for the web worker that color-indexes frames in the background, using `node-dithering` and `NeuQuant.js`. This is bundled in `dist/Animated_GIF.js`, using workerify.
 * `main.js` - stub in order to export the library using Browserify (you won't generally need to touch this one)
 
 External / included libraries --see *Credits* for more information on these. You generally don't want to touch these because it will make very difficult to track updates in those libraries:
 
 * `lib/NeuQuant.js` - color quantizer based on a neural network algorithm, this is an external library
-* `lib/omggif.js` - GIF89 encoder/decoder
+* `omggif.js` - GIF89 encoder/decoder
+* `node-dithering` - class with three different types of dithering algorithms
 
 ### Rebuild `dist` files
 
@@ -99,15 +121,16 @@ npm install         # this pulls dependencies for building (uglify, browserify)
 npm run build       # and this actually builds
 ```
 
-Once you do the initial two steps you just need to execute `npm run build` whenever you change things and want to rebuild the files in `dist/`.
+Once you do the initial two steps you just need to execute `npm run build` whenever you change things and want to rebuild the files in `dist/`. Or you can also use `npm run watch` to have it build the library automatically.
 
 
 ## Credits
 
-We're using these two fantastic libraries to do GIF stuff:
+We're using these fantastic libraries to do GIF stuff:
 
 * Anthony Dekker's [NeuQuant](http://members.ozemail.com.au/~dekker/NEUQUANT.HTML) image quantization algorithm which was ported from C into Java by Kevin Weiner and then to [ActionScript 3](http://www.bytearray.org/?p=93) by Thibault Imbert, and to [JavaScript](http://antimatter15.com/wp/2010/07/javascript-to-animated-gif/) by antimatter15, and fixed, patched and revised by [sole](http://soledadpenades.com).
 * Dean McNamee's [omggif](https://github.com/deanm/omggif) library - for actually encoding into GIF89
+* sole's [node-dithering](https://github.com/sole/node-dithering).
 
 And then, to build the `dist` files
 
@@ -115,7 +138,5 @@ And then, to build the `dist` files
 * uglify
 * browserify
 
-## Changelog
-
-* **0.0.2** - Adds support for dithering and using custom palettes.
-* **0.0.1** - first version with proper npm based build system
+[npm-image]: https://img.shields.io/npm/v/animated_gif.svg
+[npm-url]: https://npmjs.org/package/animated_gif.js

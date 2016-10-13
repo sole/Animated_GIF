@@ -1,6 +1,6 @@
 {
-  "name": "Animated_GIF",
-  "version": "1.0.0",
+  "name": "animated_gif",
+  "version": "1.0.1",
   "description": "Javascript library for creating animated GIFs",
   "main": "src/Animated_GIF.js",
   "scripts": {
