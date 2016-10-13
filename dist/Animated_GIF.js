@@ -791,6 +791,8 @@ try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) { 
 function Animated_GIF(options) {
     'use strict';
 
+    options = options || {};
+
     var GifWriter = require('omggif').GifWriter;
 
     var width = options.width || 160;
