@@ -4,6 +4,7 @@
   "description": "Javascript library for creating animated GIFs",
   "main": "src/Animated_GIF.js",
   "scripts": {
+    "prebuild": "mkdirp dist/",
     "build": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.js",
     "watch": "watchify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.js",
     "minify": "browserify src/Animated_GIF.js -s Animated_GIF -o dist/Animated_GIF.min.js -g uglifyify -t uglifyify",
@@ -28,6 +29,7 @@
     "workerify": "^0.3.0"
   },
   "dependencies": {
+    "mkdirp": "^0.5.1",
     "node-dithering": "0.0.1",
     "omggif": "^1.0.8"
   },
