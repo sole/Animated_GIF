@@ -1,6 +1,6 @@
 {
-  "name": "animated_gif",
-  "version": "0.0.3",
+  "name": "Animated_GIF",
+  "version": "1.0.0",
   "description": "Javascript library for creating animated GIFs",
   "main": "src/Animated_GIF.js",
   "scripts": {
@@ -24,12 +24,12 @@
   "homepage": "https://github.com/sole/Animated_GIF",
   "devDependencies": {
     "browserify": "^13.1.0",
+    "mkdirp": "^0.5.1",
     "uglifyify": "^3.0.3",
     "watchify": "^3.7.0",
     "workerify": "^0.3.0"
   },
   "dependencies": {
-    "mkdirp": "^0.5.1",
     "node-dithering": "0.0.1",
     "omggif": "^1.0.8"
   },
