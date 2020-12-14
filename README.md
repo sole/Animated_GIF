@@ -54,12 +54,37 @@ ag.setSize(320, 240);
 // ... etc
 ```
 
+### Using as module
+
+Install with NPM or YARN:
+
+```bash
+npm install --save animated_gif
+# or
+yarn add animated_gif
+```
+
+Use in your project:
+```javascript
+import AnimatedGIF from 'animated_gif'
+
+const ag = new AnimatedGIF({
+    width: 640,
+    height: 480,
+    // Will work only if BLOB worker's code from final build
+    workerUrl: window.URL.createObjectURL(new Blob(['minified worker source code'], { type: 'text/javascript' }))
+})
+
+// ... use code from examples
+```
+
 ## Available options
 
 Pass an object with the desired values when creating an `Animated_GIF` instance:
 
 - `sampleInterval`: how many pixels to skip when creating the palette. Default is 10. Less is better, but slower.
 - `numWorkers`: how many web workers to use. Default is 2.
+- `workerUrl`: URL to worker (default: './Animated_GIF.worker.js') (accepts BLOB if you need to use it with bundler)
 - `useQuantizer`: this is `true` by default, and provides the highest quality results, at the cost of slower processing and bigger files. When this is enabled, a neural network quantizer will be used to find the best palette for each frame. No dithering is available in this case, as the colours are chosen with the quantizer too.
 - `dithering`: selects how to best spread the error in colour mapping, to *conceal* the fact that we're using a palette and not true color. Note that using this option automatically disables the aforementioned quantizer. Best results if you pass in a palette, but if not we'll create one using the colours in the first frame. Possible options:
     - `bayer`: creates a somewhat nice and retro 'x' hatched pattern
