@@ -14,7 +14,8 @@ function Animated_GIF(options) {
     var height = options.height || 120;
     var dithering = options.dithering || null;
     var palette = options.palette || null;
-    var canvas = null, ctx = null, repeat = 0, delay = 250;
+    var delay = options.delay !== undefined ? (options.delay * 0.1) : 250;
+    var canvas = null, ctx = null, repeat = 0;
     var frames = [];
     var numRenderedFrames = 0;
     var onRenderCompleteCallback = function() {};
@@ -232,7 +233,7 @@ function Animated_GIF(options) {
             onRenderProgressCallback(0.75 + 0.25 * frame.position * 1.0 / frames.length);
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
                 palette: framePalette,
-                delay: delay
+                delay: frame.delay,
             });
         });
 
@@ -272,7 +273,7 @@ function Animated_GIF(options) {
         repeat = r;
     };
 
-    this.addFrame = function(element) {
+    this.addFrame = function(element, opts) {
 
         if(ctx === null) {
             this.setSize(width, height);
@@ -281,10 +282,11 @@ function Animated_GIF(options) {
         ctx.drawImage(element, 0, 0, width, height);
         var imageData = ctx.getImageData(0, 0, width, height);
 
-        this.addFrameImageData(imageData);
+        this.addFrameImageData(imageData, opts);
     };
 
-    this.addFrameImageData = function(imageData) {
+    this.addFrameImageData = function(imageData, opts) {
+        opts = opts || {};
 
         var dataLength = imageData.length,
             imageDataArray = new Uint8Array(imageData.data);
@@ -293,6 +295,7 @@ function Animated_GIF(options) {
             data: imageDataArray,
             width: imageData.width,
             height: imageData.height,
+            delay: opts.delay !== undefined ? (opts.delay * 0.1) : delay,
             palette: palette,
             dithering: dithering,
             done: false,
