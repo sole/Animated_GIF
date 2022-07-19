@@ -13,7 +13,7 @@ var ag = new Animated_GIF();
 ag.setSize(320, 240);
 
 for(var i = 0; i < imgs.length; i++) {
-    ag.addFrame(imgs[i]);
+    ag.addFrame(imgs[i], { delay: 1000 });
 }
 
 var animatedImage = document.createElement('img');
@@ -67,6 +67,10 @@ Pass an object with the desired values when creating an `Animated_GIF` instance:
     - `closest`: actually no dithering, just picks the closest colour from the palette per each pixel
 - `palette`: An array of integers containing a palette. E.g. `[ 0xFF0000, 0x00FF00, 0x0000FF, 0x000000 ]` contains red, green, blue and black. The length of a palette must be a power of 2, and contain between 2 and 256 colours.
 
+### addFrame options
+
+- `delay`: set frame delay. Default is `Animated_GIF` instance delay.
+
 ## Tests and examples
 
 Check the files in the `tests` folder:
@@ -77,6 +81,7 @@ Check the files in the `tests` folder:
 * [Dithering](http://sole.github.io/Animated_GIF/tests/dithering.html)
 * [Stress](http://sole.github.io/Animated_GIF/tests/stress.html)
 * [Sample Interval](http://sole.github.io/Animated_GIF/tests/sample_interval.html)
+* [Frame Delay](http://sole.github.io/Animated_GIF/tests/frame_delay.html)
 
 Start the server from the root folder (e.g. `Animated_GIF`). One way of doing it is using the simple Python web server:
 
