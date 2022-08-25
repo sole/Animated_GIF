@@ -22,6 +22,7 @@ function Animated_GIF(options) {
     var onRenderProgressCallback = function() {};
     var sampleInterval;
     var workers = [], availableWorkers = [], numWorkers;
+    var workerUrl = options.workerUrl || './Animated_GIF.worker'
     var generatingGIF = false;
 
     // We'll try to be a little lenient with the palette so as to make the library easy to use
@@ -68,7 +69,7 @@ function Animated_GIF(options) {
     numWorkers = options.numWorkers || 2;
 
     for(var i = 0; i < numWorkers; i++) {
-        var w = new Worker('./Animated_GIF.worker');
+        var w = new Worker(workerUrl);
         workers.push(w);
         availableWorkers.push(w);
     }
