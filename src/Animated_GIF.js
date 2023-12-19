@@ -14,6 +14,8 @@ function Animated_GIF(options) {
     var height = options.height || 120;
     var dithering = options.dithering || null;
     var palette = options.palette || null;
+    var disposal = options.disposal || 0;
+    var transparent = options.transparent || null;
     var delay = options.delay !== undefined ? (options.delay * 0.1) : 250;
     var canvas = null, ctx = null, repeat = 0;
     var frames = [];
@@ -234,6 +236,8 @@ function Animated_GIF(options) {
             gifWriter.addFrame(0, 0, width, height, frame.pixels, {
                 palette: framePalette,
                 delay: frame.delay,
+                transparent: transparent ? frame.pixels[0] : undefined,
+                disposal: disposal,
             });
         });
 
@@ -278,7 +282,7 @@ function Animated_GIF(options) {
         if(ctx === null) {
             this.setSize(width, height);
         }
-
+        ctx.clearRect(0,0,width,height);
         ctx.drawImage(element, 0, 0, width, height);
         var imageData = ctx.getImageData(0, 0, width, height);
 
